@@ -42,5 +42,5 @@ Link: [http://www.sourcetreeapp.com](http://www.sourcetreeapp.com)
 ![commit](http://projectbs.github.io/webGL/assets/images/5.PNG)
 * SourceTree의 푸시를 클릭하여 GitHub에 push
 ![push](http://projectbs.github.io/webGL/assets/images/6.PNG)
-* Pull Request를 보낼 코드를 확인하고 Create Pull Request를 클릭.
+* Pull Request를 보낼 코드를 확인하고 Create Pull Request를 클릭.  
 ![PullRequest](http://projectbs.github.io/webGL/assets/images/2.PNG)
