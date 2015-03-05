@@ -25,3 +25,4 @@ $ git commit -m "[커밋 메세지]"
 $ git push origin [브랜치 이름]
 ```
 * Pull Request를 보낼 코드를 확인하고 Create Pull Request를 클릭.
+![PullRequest](http://projectbs.github.io/webGL/assets/images/2.PNG)
