@@ -17,7 +17,7 @@
     <script>
         var camera, scene, renderer,
             mesh, geometry, material,
-            spotLight,
+            ambientLight, directionLight,
             stats, controls;
 
         function init(){
@@ -58,10 +58,12 @@
         }
 
         function setupLight(){
-            spotLight = new THREE.SpotLight(0xFFFFFF);
-            spotLight.position.set( 0, 0, 500 );
-            spotLight.lookAt(scene.position);
-            scene.add(spotLight);
+            ambientLight = new THREE.AmbientLight(0x292929);
+            scene.add(ambientLight);
+
+            directionLight = new THREE.DirectionalLight( 0xFFFFFF, 0.7);
+            directionLight.position.set( -20, 40, 60 );
+            scene.add(directionLight);
         }
 
         function setupStats(){
