@@ -11,17 +11,18 @@
             overflow: hidden;
         }
     </style>
-    <script src="../libs/three.js"></script>
+    <script src="../../libs/three.js"></script>
     <script>
         var camera, scene, renderer,
-            mesh, geometry, material;
+            mesh, geometry, material,
+            spotLight;
 
         function init(){
             setupScene();
             setupRenderer();
             setupCamera();
-
             setupMesh();
+            setupLight();
 
             renderScene();
         }
@@ -34,19 +35,28 @@
             renderer = new THREE.WebGLRenderer();
             renderer.setClearColor( 0xFFFFFF, 1.0 );
             renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.shadowMapEnabled = true;
             document.body.appendChild( renderer.domElement );
         }
 
         function setupCamera(){
             camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
             camera.position.z = 500;
+            camera.lookAt(scene.position);
         }
 
         function setupMesh(){
             geometry = new THREE.BoxGeometry( 200, 200, 200 );
-            material = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true, wireframeLinewidth: 2 } );
+            material = new THREE.MeshLambertMaterial( { color: 0xFF0000 } );
             mesh = new THREE.Mesh( geometry, material );
             scene.add( mesh );
+        }
+
+        function setupLight(){
+            spotLight = new THREE.SpotLight(0xFFFFFF);
+            spotLight.position.set( 0, 0, 500 );
+            spotLight.lookAt(mesh);
+            scene.add(spotLight);
         }
 
         function renderScene(){
