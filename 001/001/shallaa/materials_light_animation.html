@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+    <script src="../../libs/three.js"></script>
+    <script src="../../libs/stats.js"></script>
+    <script>
+        (function(W){
+            'use strict';
+            var doc = W['document'], docEl, docBody, screenW, screenH,
+                scene, renderer, camera,
+                plane, cube, sphere,
+                ambientLight, spotLight,
+                step = 0, stats, t0;
+
+            function init(){
+                docEl = doc.documentElement, docBody = doc.body;
+
+                screenW = W['innerWidth'] || docEl['clientWidth'] || docBody['clientWidth'];
+                screenH = W['innerHeight'] || docEl['clientHeight'] || docBody['clientHeight'];
+
+                setupRenderer();
+                setupScene();
+                setupCamera();
+
+                setupStats();
+
+                renderScene();
+            }
+
+            function setupRenderer(){
+                var canvas = doc.createElement('canvas'), gl;
+
+                ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl'].some(function(k){ return gl = canvas.getContext(k); });
+
+                renderer = ( gl ) ? new THREE.WebGLRenderer() : new THREE.CanvasRenderer();
+
+                renderer.setClearColor( new THREE.Color(0xEEEEEE) );
+                renderer.setSize( screenW, screenH );
+                renderer.shadowMapEnabled = true;
+
+                docBody.appendChild(renderer.domElement);
+
+                canvas = undefined, gl = undefined;
+            }
+
+            function setupScene(){
+                scene = new THREE.Scene();
+                scene.add( new THREE.AxisHelper(20) );
+
+                addMesh();
+                addLight();
+            }
+
+            function setupCamera(){
+                camera = new THREE.PerspectiveCamera( 45, screenW / screenH, 0.1, 1000);
+                camera.position.set( -30, 40, 30 );
+                camera.lookAt(scene.position);
+            }
+
+            function setupStats(){
+                stats = new Stats();
+                stats.setMode(0);
+
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.left = '0px';
+                stats.domElement.style.top = '0px';
+
+                docBody.appendChild(stats.domElement);
+            }
+
+            function renderScene(){
+                stats.update();
+
+                cube.rotation.x += 0.02;
+                cube.rotation.y += 0.02;
+                cube.rotation.z += 0.02;
+
+                step += 0.04;
+
+                sphere.position.set( 20 + ( 10 * Math.cos(step) ), 2 + ( 10 * Math.abs(Math.sin(step))), sphere.position.z  );
+
+                renderer.render( scene, camera );
+                requestAnimationFrame(renderScene);
+            }
+
+            function addMesh(){
+                plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 60, 20 ), new THREE.MeshLambertMaterial({color:0xCCCCCC}) );
+                plane.rotation.x = -0.5 * Math.PI;
+                plane.position.set( 15, 0, 0 );
+                plane.receiveShadow = true;
+                scene.add(plane);
+
+                cube = new THREE.Mesh( new THREE.BoxGeometry( 4, 4, 4 ), new THREE.MeshLambertMaterial({color:0xFF0000}) );
+                cube.position.set( -4, 3, 0 );
+                cube.castShadow = true;
+                scene.add(cube);
+
+                sphere = new THREE.Mesh( new THREE.SphereGeometry( 4, 20, 20 ), new THREE.MeshLambertMaterial({color:0x7777FF}));
+                sphere.position.set( 20, 4, 2 );
+                sphere.castShadow = true;
+                scene.add(sphere);
+            }
+
+            function addLight(){
+                ambientLight = new THREE.AmbientLight(0x0C0C0C);
+                scene.add(ambientLight);
+
+                spotLight = new THREE.SpotLight(0xFFFFFF);
+                spotLight.position.set( -40, 60, -10 );
+                spotLight.castShadow = true;
+                scene.add(spotLight);
+            }
+
+            t0 = setInterval( function(){
+                switch( doc.readyState ){
+                    case'complete':case'loaded':break;
+                    case'interactive':if( doc.documentElement.doScroll ) try{doc.documentElement.doScroll('left');}catch(e){return;}
+                    default:return;
+                }
+                clearInterval(t0);
+                init();
+            }, 1 );
+        })(this);
+    </script>
+</head>
+<body>
+</body>
+</html>
