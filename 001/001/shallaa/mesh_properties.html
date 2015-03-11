@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+    <script src="../../libs/three.js"></script>
+    <script src="../../libs/stats.js"></script>
+    <script src="../../libs/dat.gui.js"></script>
+    <script>
+        (function(W){
+            'use strict';
+            var doc = W['document'], screenW, screenH, docEl, docBody,
+                scene, renderer, camera,
+                plane, cube,
+                ambientLight, spotLight,
+                controls, stats, t0;
+
+            function init(){
+                docEl = doc.documentElement, docBody = doc.body;
+
+                screenW = W['innerWidth'] || docEl['clientWidth'] || docBody['clientWidth'];
+                screenH = W['innerHeight'] || docEl['clientHeight'] || docBody['clientHeight'];
+
+                setupRenderer();
+                setupScene();
+                setupCamera();
+
+                setupStats();
+                setupGUI();
+
+                renderScene();
+            }
+
+            function setupRenderer(){
+                var canvas = doc.createElement('canvas'), gl;
+
+                ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl'].some(function(k){ return gl = canvas.getContext(k); });
+
+                renderer = ( gl ) ? new THREE.WebGLRenderer() : new THREE.CanvasRenderer();
+
+                renderer.setClearColor( new THREE.Color(0xEEEEEE), 1.0 );
+                renderer.setSize( screenW, screenH );
+                renderer.shadowMapEnabled = true;
+
+                docBody.appendChild(renderer.domElement);
+
+                canvas = undefined, gl = undefined;
+            }
+
+            function setupScene(){
+                scene = new THREE.Scene();
+                scene.add( new THREE.AxisHelper(20) );
+
+                addMesh();
+                addLight();
+            }
+
+            function setupCamera(){
+                camera = new THREE.PerspectiveCamera( 45, screenW / screenH, 0.1, 1000);
+                camera.position.set( -30, 40, 30 );
+                camera.lookAt(scene.position);
+            }
+
+            function setupStats(){
+                stats = new Stats();
+                stats.setMode(0);
+
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.left = '0px';
+                stats.domElement.style.top = '0px';
+
+                docBody.appendChild(stats.domElement);
+            }
+
+            function setupGUI(){
+                var gui = new dat.GUI(),
+                    folder, conX, conY, conZ;
+
+                controls = new function(){
+                    this.scaleX = 1;
+                    this.scaleY = 1;
+                    this.scaleZ = 1;
+
+                    this.positionX = 0;
+                    this.positionY = 4;
+                    this.positionZ = 0;
+
+                    this.rotationX = 0;
+                    this.rotationY = 0;
+                    this.rotationZ = 0;
+                    this.scale = 1;
+
+                    this.translateX = 0;
+                    this.translateY = 0;
+                    this.translateZ = 0;
+
+                    this.visible = true;
+
+                    this.translate = function(){
+                        cube.translateX(controls.translateX);
+                        cube.translateY(controls.translateY);
+                        cube.translateZ(controls.translateZ);
+
+                        controls.positionX = cube.position.x;
+                        controls.positionY = cube.position.y;
+                        controls.positionZ = cube.position.z;
+                    };
+                };
+
+                folder = gui.addFolder('scale');
+                folder.add( controls, 'scaleX', 0, 5 );
+                folder.add( controls, 'scaleY', 0, 5 );
+                folder.add( controls, 'scaleZ', 0, 5 );
+
+                folder = gui.addFolder('position');
+                conX = folder.add( controls, 'positionX', -10, 10 );
+                conY = folder.add( controls, 'positionY', -4, 20 );
+                conZ = folder.add( controls, 'positionZ', -10, 10 );
+
+                conX.listen();
+                conX.onChange( function(val){
+                    cube.position.x = controls.positionX;
+                } );
+
+                conY.listen();
+                conY.onChange( function(val){
+                    cube.position.y = controls.positionY;
+                } );
+
+                conZ.listen();
+                conZ.onChange( function(val){
+                    cube.position.z = controls.positionZ;
+                } );
+
+                folder = gui.addFolder('rotation');
+                folder.add( controls, 'rotationX', -4, 4 );
+                folder.add( controls, 'rotationY', -4, 4 );
+                folder.add( controls, 'rotationZ', -4, 4 );
+
+                folder = gui.addFolder('translate');
+                folder.add( controls, 'translateX', -10, 10 );
+                folder.add( controls, 'translateY', -10, 10 );
+                folder.add( controls, 'translateZ', -10, 10 );
+                folder.add( controls, 'translate' );
+
+                gui.add( controls, 'visible' );
+            }
+
+            function renderScene(){
+                var sw = W['innerWidth']  || docEl['clientWidth']  || docBody['clientWidth'],
+                    sh = W['innerHeight'] || docEl['clientHeight'] || docBody['clientHeight'];
+
+                if( screenW != sw || screenH != sh ){
+                    camera.aspect = sw / sh;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize( sw, sh );
+                    screenW = sw, screenH = sh;
+                }
+
+                stats.update();
+
+                cube.visible = controls.visible;
+
+                cube.rotation.x = controls.rotationX;
+                cube.rotation.y = controls.rotationY;
+                cube.rotation.z = controls.rotationZ;
+
+                cube.scale.set( controls.scaleX, controls.scaleY, controls.scaleZ );
+
+                renderer.render( scene, camera );
+                requestAnimationFrame(renderScene);
+            }
+
+            function addMesh(){
+                plane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 60, 40, 1, 1), new THREE.MeshLambertMaterial({color:0xFFFFFF}) );
+                plane.rotation.x = -0.5 * Math.PI;
+                plane.position.set( 0, 0, 0 );
+                plane.receiveShadow = true;
+                scene.add(plane);
+
+                cube = new THREE.Mesh( new THREE.BoxGeometry( 5, 8, 3 ), new THREE.MeshLambertMaterial({color:0x44FF44}) );
+                cube.position.y = 4;
+                cube.castShadow = true;
+                scene.add(cube);
+            }
+
+            function addLight(){
+                ambientLight = new THREE.AmbientLight(0x0C0C0C);
+                scene.add(ambientLight);
+
+                spotLight = new THREE.SpotLight(0xFFFFFF);
+                spotLight.position.set( -40, 60, 20 );
+                spotLight.castShadow = true;
+                scene.add(spotLight);
+            }
+
+            t0 = setInterval( function(){
+                switch( doc.readyState ){
+                    case'complete':case'loaded':break;
+                    case'interactive':if( doc.documentElement.doScroll ) try{doc.documentElement.doScroll('left');}catch(e){return;}
+                    default:return;
+                }
+                clearInterval(t0);
+                init();
+            }, 1 );
+        })(this);
+    </script>
+</head>
+<body>
+</body>
+</html>
