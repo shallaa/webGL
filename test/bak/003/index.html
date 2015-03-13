@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head lang="ko">
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="http://projectbs.github.io/bsWebGL/favicon.ico" type="image/x-icon">
+    <title>음 시작을 해볼까</title>
+    <script src='bsgl.js'></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 11px
+        }
+    </style>
+</head>
+<body>
+<canvas id='testCanvas'></canvas>
+<canvas id='testCanvas2'></canvas>
+<canvas id='testCanvas3'></canvas>
+<script>
+    bsGL.init(function () {
+        console.log('초기화')
+        console.log(bsGL.DETECT)
+        var gl1 = bsGL.getContext3D('testCanvas')
+        var gl2 = bsGL.getContext3D('testCanvas2')
+        var gl3 = bsGL.getContext3D('testCanvas3')
+        console.log(gl1)
+        var materialTest0 = {
+            programName: 'color',
+            color: [Math.random(), Math.random(), Math.random(), 1]
+        }
+        var materialTest1 = {
+            programName: 'bitmap',
+            texture: gl2.Texture('test.png')
+        }
+        var materialTest2 = {
+            programName: 'bitmapLight',
+            // 외부에서 밉맵관련도 설정할 수 있어야겠고..
+//            texture: gl2.Texture('07.png', gl1.ctx.LINEAR, gl1.ctx.LINEAR)
+            texture: gl2.Texture('test2.png')
+        }
+        gl2.S('setSize', [600, 600])
+        gl2.S('>', gl1.Mesh().S(
+                'geometryName', 'box',
+                'position', [0, 0, 1000],
+                'material', materialTest2,
+                'id', 'test',
+                'this'
+        ))
+        console.log('gl컨텍스트 에서 #id검색!', gl1.S('#test'))
+        console.log("메쉬로도 #id검색", gl1.Mesh('#test'))
+        gl1.Mesh('#test').S('geometryName', 'box')
+        // 다중 컨텍스트 확인
+        setTimeout(function () {
+//            gl1.S('setSize', [300, 300])
+//            gl2.S('setSize', [600, 600])
+            console.log()
+            console.log(gl1)
+            console.log(gl2)
+//            gl2.enable = 0
+            for (var i = 0; i < 10; i++) {
+                var scale = Math.random() * 50 + 30
+                gl1.children.push(gl1.Mesh('triangle').S('scale', [scale, scale, scale], 'position', [200 * Math.random() - 100, 200 * Math.random() - 100, 200 * Math.random() - 100 + 1000], 'material', materialTest0, 'this'))
+                gl1.children.push(gl1.Mesh('rect').S('scale', [scale, scale, scale], 'position', [200 * Math.random() - 100, 200 * Math.random() - 100, 200 * Math.random() - 100 + 1000], 'this'))
+                gl2.children.push(gl2.Mesh('box').S('scale', [scale, scale, scale], 'position', [200 * Math.random() - 100, 200 * Math.random() - 100, 200 * Math.random() - 100 + 1000], 'this'))
+                gl2.children.push(gl2.Mesh('box').S('scale', [scale, scale, scale], 'position', [300 * Math.random() - 100, 300 * Math.random() - 100, 200 * Math.random() - 100 + 1000], 'material', materialTest2, 'this'))
+            }
+        }, 1000)
+    }, 'baseShaders.js', 'baseBuffers.js')
+</script>
+</body>
+</html>

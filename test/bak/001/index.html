@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head lang="ko">
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="http://projectbs.github.io/bsWebGL/favicon.ico" type="image/x-icon">
+    <title>음 시작을 해볼까</title>
+    <script src='bsgl.js'></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 11px
+        }
+    </style>
+</head>
+<body>
+<canvas id='testCanvas'></canvas>
+<canvas id='testCanvas2'></canvas>
+<script>
+    bsGL.init(function () {
+        console.log('초기화')
+//        console.log(bsGL.DETECT)
+        var gl1 = bsGL.getContext3D('testCanvas')
+        var gl2 = bsGL.getContext3D('testCanvas2')
+        console.log(gl1)
+        var materialTest = {
+            programName: 'color',
+            color: [Math.random(), Math.random(), Math.random(), 0.8]
+        }
+        gl1.S('>', gl1.Mesh().S(
+                'geometryName', 'rect', 'position', [0, 100, 100], 'material', materialTest, 'this'
+        ))
+        gl2.children.push(gl1.Mesh().S('geometryName', 'rect', 'position', [0, 100, 100], 'this'))
+        gl2.children.push(gl1.Mesh().S('geometryName', 'triangle', 'position', [-100, 100, 100], 'this'))
+        setTimeout(function () {
+            gl1.S('setSize', [300, 300])
+            gl2.S('setSize', [300, 300])
+            console.log()
+            console.log(gl1)
+            console.log(gl2)
+//            gl2.enable = 0
+            var gl_1 = gl2.ctx
+            var texture = gl_1.createTexture() // 텍스쳐 생성
+            texture.img = new Image()
+            texture.img.src = "test.png"
+            texture.loaded = 0
+            texture.img.onload = function () {
+                console.log('로딩완료')
+                texture.loaded = 1
+                gl_1.bindTexture(gl_1.TEXTURE_2D, texture)
+                gl_1.texImage2D(gl_1.TEXTURE_2D, 0, gl_1.RGBA, gl_1.RGBA, gl_1.UNSIGNED_BYTE, texture.img);
+                gl_1.texParameteri(gl_1.TEXTURE_2D, gl_1.TEXTURE_MAG_FILTER, gl_1.LINEAR);
+                gl_1.texParameteri(gl_1.TEXTURE_2D, gl_1.TEXTURE_MIN_FILTER, gl_1.LINEAR);
+                gl_1.bindTexture(gl_1.TEXTURE_2D, null)
+                console.log(texture)
+            }
+            var materialTest2 = {
+                programName: 'bitmap',
+                texture: texture
+            }
+            gl2.children.push(gl1.Mesh('triangle').S('position', [-100 * Math.random(), 100 * Math.random(), 100 * Math.random()], 'material', materialTest2, 'this'))
+            gl2.children.push(gl1.Mesh().S('position', [-100 * Math.random(), 100 * Math.random(), 100 * Math.random()], 'material', gl2.Material(), 'this'))
+        }, 1000)
+    }, 'baseShaders.js', 'baseBuffers.js')
+</script>
+</body>
+</html>
