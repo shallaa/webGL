@@ -18,7 +18,7 @@
 <div>걍배열로 다밀어보았다..</div>
 <div>테스트조건</div>
 <div>버퍼 : 1개</div>
-<div>모바일 : 15000 , 데탑 : 150000</div>
+<div>모바일(갤노트) : 15000 , 데탑(GTX 560SE / i7 - 2600) : 120000</div>
 <div>렉트모델로 갯수 * 4 버텍스 수만큼 매번 갱신할겨웅 테스트</div>
 
 <div id="maxUniform"></div>
@@ -106,7 +106,7 @@
             }
 
             var maxUniform = gl2.ctx.getParameter(gl2.ctx.MAX_VERTEX_UNIFORM_VECTORS)
-            var aaaa = detectmob() ? 15000 : 150000
+            var aaaa = detectmob() ? 15000 : 120000
             document.getElementById('maxUniform').innerHTML = 'maxUniform : ' + maxUniform
             for (var i = 0; i < aaaa; i++) {
                 var scale = Math.random() * 25 + 25
