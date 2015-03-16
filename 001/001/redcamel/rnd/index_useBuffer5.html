@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head lang="ko">
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="http://projectbs.github.io/bsWebGL/favicon.ico" type="image/x-icon">
+    <title>음 시작을 해볼까</title>
+    <script src='bsgl.js'></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 11px
+        }
+    </style>
+</head>
+<body>
+<!--<canvas id='testCanvas'></canvas>-->.
+<div>걍배열로 다밀어보았다..</div>
+<div>아 토탈 유니폼 갯수에서 유니폼 사용한 갯수로 나눠서 또 분기해줘야하는군 -_-</div>
+<div id="maxUniform"></div>
+<canvas id='testCanvas2'></canvas>
+<!--<canvas id='testCanvas3'></canvas>-->
+<script>
+    bsGL.init(function () {
+        console.log('초기화')
+        console.log(bsGL.DETECT)
+//        var gl1 = bsGL.getContext3D('testCanvas')
+        var gl2 = bsGL.getContext3D('testCanvas2')
+//        var gl3 = bsGL.getContext3D('testCanvas3')
+//        console.log(gl1)
+//        var materialTest0 = {
+//            programName: 'color',
+//            color: [Math.random(), Math.random(), Math.random(), 1]
+//        }
+        var materialTest1 = {
+            programName: 'bitmap',
+            texture: gl2.Texture('testAsset/01.png')
+        }
+        var materialTest2 = {
+            programName: 'bitmap',
+            // 외부에서 밉맵관련도 설정할 수 있어야겠고..
+//            texture: gl2.Texture('07.png', gl1.ctx.LINEAR, gl1.ctx.LINEAR)
+            texture: gl2.Texture('testAsset/02.png')
+        }
+        var materialTest3 = {
+            programName: 'bitmap',
+            // 외부에서 밉맵관련도 설정할 수 있어야겠고..
+//            texture: gl2.Texture('07.png', gl1.ctx.LINEAR, gl1.ctx.LINEAR)
+            texture: gl2.Texture('testAsset/03.png')
+        }
+        var materialTest4 = {
+            programName: 'bitmap',
+            // 외부에서 밉맵관련도 설정할 수 있어야겠고..
+//            texture: gl2.Texture('07.png', gl1.ctx.LINEAR, gl1.ctx.LINEAR)
+            texture: gl2.Texture('testAsset/04.png')
+        }
+        var materialTest5 = {
+            programName: 'bitmap',
+            // 외부에서 밉맵관련도 설정할 수 있어야겠고..
+//            texture: gl2.Texture('07.png', gl1.ctx.LINEAR, gl1.ctx.LINEAR)
+            texture: gl2.Texture('testAsset/05.png')
+        }
+        var materialTest6 = {
+            programName: 'bitmap',
+            // 외부에서 밉맵관련도 설정할 수 있어야겠고..
+//            texture: gl2.Texture('07.png', gl1.ctx.LINEAR, gl1.ctx.LINEAR)
+            texture: gl2.Texture('testAsset/06.png')
+        }
+        var materialTest7 = {
+            programName: 'bitmap',
+            // 외부에서 밉맵관련도 설정할 수 있어야겠고..
+//            texture: gl2.Texture('07.png', gl1.ctx.LINEAR, gl1.ctx.LINEAR)
+            texture: gl2.Texture('testAsset/07.png')
+        }
+        gl2.S('setSize', [600, 600])
+        // 다중 컨텍스트 확인
+        setTimeout(function () {
+//            gl1.S('setSize', [30, 30])
+            gl2.S('setSize', [1900, 800])
+            console.log()
+//            console.log(gl1)
+            console.log(gl2)
+//            gl2.enable = 0
+
+
+            var list = []
+
+            function detectmob() {
+                if( navigator.userAgent.match(/Android/i)
+                        || navigator.userAgent.match(/webOS/i)
+                        || navigator.userAgent.match(/iPhone/i)
+                        || navigator.userAgent.match(/iPad/i)
+                        || navigator.userAgent.match(/iPod/i)
+                        || navigator.userAgent.match(/BlackBerry/i)
+                        || navigator.userAgent.match(/Windows Phone/i)
+                ){
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+
+            var maxUniform = gl2.ctx.getParameter(gl2.ctx.MAX_VERTEX_UNIFORM_VECTORS)
+            var aaaa = detectmob() ? 10000 : 40000
+            document.getElementById('maxUniform').innerHTML = 'maxUniform : ' + maxUniform
+            for (var i = 0; i < aaaa; i++) {
+                var scale = Math.random() * 25 + 25
+                list.push(gl2.Mesh('rect').S(
+                        'scale', [scale, scale, scale],
+                        'position', [Math.random() * 5000 - 2500, Math.random() * 5000 - 2500, Math.random() * 5000 ],
+//                        'position', [200*i,0,0],
+                        'rotation', [Math.random() * 360, Math.random() * 360, Math.random() * 360],
+
+                        'this'))
+            }
+
+
+            function mergeMesh($context3D, $key) {
+                var context3d = $context3D
+                var target, max = list.length
+                var tempVertexData = []
+                var tempUvData = []
+                var tempIndexData = []
+
+                var k2 = 0
+
+                context3d.positionBuffer.data = []
+                context3d.rotationBuffer.data = []
+
+                for (var i = 0; i < max; i++) {
+                    target = list[i]
+                    var textureIDX = Math.random() / 10
+                    var uniformID = 0
+                    var tData = bsGL.baseBuffer[2].vertexData.data.concat()
+                    var tScale = target.scale
+                    var tVec = vec3.create()
+
+                    var rotation = Math.random() * Math.PI
+                    var position = target.position
+                    for (var k = 0; k < tData.length / 3; k++) {
+                        tVec[0] = tData[k * 3 + 0]
+                        tVec[1] = tData[k * 3 + 1]
+                        tVec[2] = tData[k * 3 + 2]
+                        tVec[0] *= tScale[0]
+                        tVec[1] *= tScale[1]
+                        tVec[2] *= tScale[2]
+                        tempVertexData.push(tVec[0], tVec[1], tVec[2], textureIDX, uniformID)
+                        context3d.positionBuffer.data.push(target.position[0], target.position[1], target.position[2])
+                        context3d.rotationBuffer.data.push(target.rotation[0], target.rotation[1], target.rotation[2])
+                    }
+
+
+                    tData = bsGL.baseBuffer[2].uvData.data.concat()
+                    for (var k = 0; k < tData.length; k++) {
+                        tempUvData.push(tData[k])
+                    }
+                    tData = bsGL.baseBuffer[2].indexData.data.concat()
+                    for (var k = 0; k < tData.length / 6; k++) {
+                        tempIndexData.push(k2 * 4, k2 * 4 + 1, k2 * 4 + 2)
+                        tempIndexData.push(k2 * 4, k2 * 4 + 2, k2 * 4 + 3)
+                        k2++
+                        //    + (tData.length)  * i
+                    }
+                }
+
+                context3d.positionBuffer.data = new Float32Array(context3d.positionBuffer.data)
+                context3d.rotationBuffer.data = new Float32Array(context3d.rotationBuffer.data)
+
+                var t1 = {
+                    name: $key,
+                    vertexData: {
+                        data: tempVertexData,
+                        size: 11
+                    },
+                    uvData: {
+                        data: tempUvData,
+                        size: 2
+                    },
+                    indexData: {
+                        data: tempIndexData,
+                        size: 1
+                    }
+                }
+                context3d.makeBuffer(t1.name, t1.vertexData.data, t1.vertexData.size, 'vertexData', context3d.ctx.DYNAMIC_DRAW)
+                context3d.makeBuffer(t1.name, t1.indexData.data, t1.indexData.size, 'indexData')
+                context3d.makeBuffer(t1.name, t1.uvData.data, t1.uvData.size, 'uvData')
+                var t2 = {
+                    data: context3d.calculateNormals(t1.vertexData.data, t1.indexData.data),
+                    size: 4
+                }
+//                context3d.makeBuffer(t1.name, t2.data, t2.size, 'normalData')
+            }
+
+            mergeMesh(gl2, 'testBuffer')
+            for (var i = 0; i < 1; i++) {
+                gl2.S('>', gl2.Mesh('testBuffer').S(
+                        'material', materialTest1,
+                        'material2', materialTest2,
+                        'material3', materialTest3,
+                        'material4', materialTest4,
+                        'material5', materialTest5,
+                        'material6', materialTest6,
+                        'material7', materialTest7,
+                        'rotation', [Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2],
+                        'position', [0, 0, 5000], 'scale', [1, 1, 1], 'this'))
+
+            }
+
+        }, 1)
+    }, 'baseShaders_useBuffer5.js', 'baseBuffers.js', 'gl-matrix.js')
+</script>
+</body>
+</html>
