@@ -102,7 +102,7 @@
             }
 
             var maxUniform = gl2.ctx.getParameter(gl2.ctx.MAX_VERTEX_UNIFORM_VECTORS)
-            var aaaa = detectmob() ? 25000 : 100000
+            var aaaa = detectmob() ? 15000 : 100000
             document.getElementById('maxUniform').innerHTML = 'maxUniform : ' + maxUniform
             for (var i = 0; i < aaaa; i++) {
                 var scale = Math.random() * 25 + 25
