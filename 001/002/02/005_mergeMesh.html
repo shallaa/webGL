@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>bsWebGL 소모임 1기 002 - 005_mergeMesh</title>
+    <style>body, html {
+        width: 100%;
+        padding: 0px;
+        margin: 0px
+    }</style>
+</head>
+<body>
+<canvas id="glCanvas"></canvas>
+<script>
+    var gl, keys = 'webgl,experimental-webgl,webkit-3d,moz-webgl'.split(','), i = keys.length
+    var cvs = document.getElementById('glCanvas')
+    while (i--) if (gl = cvs.getContext(keys[i])) break
+    if (gl) console.log('webgl 초기화 성공!')
+    else console.log('webgl 초기화 실패!')
+
+    // Vertex Buffer
+    var rectData = [
+        -.5, -.5, 0.0,
+        -.5, .5, 0.0,
+        .5, -.5, 0.0,
+        .5, .5, 0.0
+    ]
+    var rectBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, rectBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rectData), gl.STATIC_DRAW)
+    rectBuffer.itemSize = 3
+    rectBuffer.numItem = 4
+    console.log(rectBuffer)
+
+    var rectIndexData = [
+        0, 1, 2,
+        1, 2, 3
+    ]
+    var rectIndexBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rectIndexBuffer)
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(rectIndexData), gl.STATIC_DRAW)
+    rectIndexBuffer.itemSize = 1
+    rectIndexBuffer.numItem = 6
+    console.log(rectIndexBuffer)
+
+    // Vertex Shader
+    var vertexShaderStr = "" +
+            "attribute vec3 aVertexPosition;" +
+            "attribute vec3 aRotation;" +
+            "attribute vec3 aPosition;" +
+            "attribute vec3 aScale;" +
+            "attribute vec3 aColor;" +
+            "varying vec3 vColor;" +
+                // 포지션 매트릭스 함수
+            "mat4 positionMTX(vec3 t)" +
+            "{" +
+            "   return mat4( 1,0,0,0, 0,1,0,0, 0,0,1,0, t[0],t[1],t[2],1);" +
+            "}" +
+            'mat4 scaleMTX(vec3 t)' +
+            '{' +
+            '   return mat4( t[0],0,0,0, 0,t[1],0,0, 0,0,t[2],0, 0,0,0,1);' +
+            '}' +
+                // 로테이션 매트릭스 함수
+            'mat4 rotationMTX(vec3 t)' +
+            '{' +
+            '   float s = sin(t[0]);float c = cos(t[0]);' +
+            '   mat4 m1 = mat4( 1,0,0,0, 0,c,-s,0, 0,s,c,0, 0,0,0,1);s = sin(t[1]);c = cos(t[1]);' +
+            '   mat4 m2 = mat4(c,0,s,0, 0,1,0,0, -s,0,c,0, 0,0,0,1);s = sin(t[2]);c = cos(t[2]);' +
+            '   mat4 m3 = mat4(c,-s,0,0, s,c,0,0, 0,0,1,0, 0,0,0,1);' +
+            '   return m3*m2*m1;' +
+            '}' +
+            "void main(void) {" +
+            " gl_Position = " +
+            "positionMTX(aPosition) * " +
+            "rotationMTX(aRotation) * " +
+            "scaleMTX(aScale) * " +
+            "vec4(aVertexPosition, 1.0);" +
+            'vColor = aColor;' +
+            "}"
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER)
+    gl.shaderSource(vertexShader, vertexShaderStr)
+    gl.compileShader(vertexShader)
+    console.log(vertexShader)
+
+    // Fragment Shader
+    var fragmentShaderStr = "precision mediump float;" +
+            "varying vec3 vColor;" +
+            "void main(void) {" +
+            " gl_FragColor = vec4(vColor, 1.0);" +
+            "}"
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+    gl.shaderSource(fragmentShader, fragmentShaderStr)
+    gl.compileShader(fragmentShader)
+    console.log(fragmentShader)
+
+    var colorProgram = gl.createProgram()
+    gl.attachShader(colorProgram, vertexShader)
+    gl.attachShader(colorProgram, fragmentShader)
+    gl.linkProgram(colorProgram)
+    console.log(colorProgram)
+
+    colorProgram.aVertexPosition = gl.getAttribLocation(colorProgram, "aVertexPosition");
+    colorProgram.aRotation = gl.getAttribLocation(colorProgram, "aRotation");
+    colorProgram.aPosition = gl.getAttribLocation(colorProgram, "aPosition");
+    colorProgram.aScale = gl.getAttribLocation(colorProgram, "aScale");
+    colorProgram.aColor = gl.getAttribLocation(colorProgram, "aColor");
+
+
+    var children = []
+    function render() {
+        gl.clearColor(0, 0, 0, 1)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+        var i = children.length
+        var tObject, tProgram, tIBO
+
+
+        gl.enableVertexAttribArray(colorProgram.aVertexPosition);
+        gl.enableVertexAttribArray(colorProgram.aRotation);
+        gl.enableVertexAttribArray(colorProgram.aPosition);
+        gl.enableVertexAttribArray(colorProgram.aScale);
+        gl.enableVertexAttribArray(colorProgram.aColor);
+
+        while (i--) {
+            tObject = children[i]
+            tProgram = tObject.program
+            tIBO = tObject.ibo
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.rotationBo)
+            var temp = tObject.rotationBo.data
+            for (var k = 0, len = temp.length / 12; k < len; k++) {
+                var gap = 0.01
+                var start = k * 12
+                temp[start] += gap, temp[start + 1] += gap, temp[start + 2] += gap
+                temp[start + 3] += gap, temp[start + 4] += gap, temp[start + 5] += gap
+                temp[start + 6] += gap, temp[start + 7] += gap, temp[start + 8] += gap
+                temp[start + 9] += gap, temp[start + 10] += gap, temp[start + 11] += gap
+            }
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(temp), gl.STATIC_DRAW)
+            gl.useProgram(tProgram)
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.vbo);
+            gl.vertexAttribPointer(tProgram.aVertexPosition, tObject.vbo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.rotationBo);
+            gl.vertexAttribPointer(tProgram.aRotation, tObject.rotationBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.positionBo);
+            gl.vertexAttribPointer(tProgram.aPosition, tObject.positionBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.scaleBo);
+            gl.vertexAttribPointer(tProgram.aScale, tObject.scaleBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.colorBo);
+            gl.vertexAttribPointer(tProgram.aColor, tObject.colorBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
+            gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
+        }
+    }
+
+
+    function Mesh() {
+        var result = {
+            program: colorProgram,
+            vbo: rectBuffer,
+            ibo: rectIndexBuffer,
+            position: new Float32Array([0, 0, 0]),
+            rotation: new Float32Array([Math.random(), Math.random(), Math.random()]),
+            scale: new Float32Array([1, 1, 1]),
+            material: new Float32Array([Math.random(), Math.random(), Math.random()])
+        }
+        return result
+    }
+
+
+    // host Code
+    for (var i = 0; i < 10000; i++) {
+        var item = new Mesh()
+        item.position[0] = Math.random() * 2 - 1
+        item.position[1] = Math.random() * 2 - 1
+        item.scale[0] = item.scale[1] = item.scale[2] = Math.random() / 10
+        children.push(item)
+    }
+    function mergeMesh($list) {
+        var item, i, len = $list.length
+        var tempVBO = [], tempIBO = []
+        var tempScaleBO = []
+        var tempRotaionBO = []
+        var tempPositionBO = []
+        var tempColorBo = []
+
+        for (i = 0; i < len; i++) {
+            item = $list[i]
+            tempVBO.push(rectData[0], rectData[1], rectData[2])
+            tempVBO.push(rectData[3], rectData[4], rectData[5])
+            tempVBO.push(rectData[6], rectData[7], rectData[8])
+            tempVBO.push(rectData[9], rectData[10], rectData[11])
+
+            tempIBO.push(i * 4 + 0, i * 4 + 1, i * 4 + 2, i * 4 + 1, i * 4 + 2, i * 4 + 3)
+
+            tempPositionBO.push(item.position[0], item.position[1], 0)
+            tempPositionBO.push(item.position[0], item.position[1], 0)
+            tempPositionBO.push(item.position[0], item.position[1], 0)
+            tempPositionBO.push(item.position[0], item.position[1], 0)
+
+            tempRotaionBO.push(item.rotation[0], item.rotation[1], item.rotation[2])
+            tempRotaionBO.push(item.rotation[0], item.rotation[1], item.rotation[2])
+            tempRotaionBO.push(item.rotation[0], item.rotation[1], item.rotation[2])
+            tempRotaionBO.push(item.rotation[0], item.rotation[1], item.rotation[2])
+
+            tempScaleBO.push(item.scale[0], item.scale[1], item.scale[2])
+            tempScaleBO.push(item.scale[0], item.scale[1], item.scale[2])
+            tempScaleBO.push(item.scale[0], item.scale[1], item.scale[2])
+            tempScaleBO.push(item.scale[0], item.scale[1], item.scale[2])
+
+            tempColorBo.push(item.material[0], item.material[1], item.material[2])
+            tempColorBo.push(item.material[0], item.material[1], item.material[2])
+            tempColorBo.push(item.material[0], item.material[1], item.material[2])
+            tempColorBo.push(item.material[0], item.material[1], item.material[2])
+
+        }
+
+        var vboBuffer = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, vboBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tempVBO), gl.STATIC_DRAW)
+        vboBuffer.itemSize = 3
+        vboBuffer.numItem = 4 * len
+        console.log(vboBuffer)
+
+        var indexBuffer = gl.createBuffer()
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(tempIBO), gl.STATIC_DRAW)
+        indexBuffer.itemSize = 1
+        indexBuffer.numItem = 6 * len
+        console.log(indexBuffer)
+
+        var positionBuffer = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tempPositionBO), gl.STATIC_DRAW)
+        positionBuffer.itemSize = 3
+        positionBuffer.numItem = 4 * len
+        console.log(positionBuffer)
+
+        var rotationBuffer = gl.createBuffer()
+        var data = new Float32Array(tempRotaionBO)
+        gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
+        rotationBuffer.data = data
+        rotationBuffer.itemSize = 3
+        rotationBuffer.numItem = 4 * len
+        console.log(rotationBuffer)
+
+        var scaleBuffer = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, scaleBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tempScaleBO), gl.STATIC_DRAW)
+        scaleBuffer.itemSize = 3
+        scaleBuffer.numItem = 4 * len
+        console.log(scaleBuffer)
+
+        var colorBuffer = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tempColorBo), gl.STATIC_DRAW)
+        colorBuffer.itemSize = 3
+        colorBuffer.numItem = 4 * len
+        console.log(colorBuffer)
+
+        children = []
+        var mesh = Mesh()
+        mesh.vbo = vboBuffer
+        mesh.ibo = indexBuffer
+        mesh.rotationBo = rotationBuffer
+        mesh.positionBo = positionBuffer
+        mesh.scaleBo = scaleBuffer
+        mesh.colorBo = colorBuffer
+        return mesh
+    }
+
+    var mergedMesh = mergeMesh(children)
+    children.push(mergedMesh)
+    console.log(mergedMesh)
+
+
+    if (cvs)  cvs.width = '1000', cvs.height = '600'
+    console.log(parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight))
+    gl.viewport(0, 0, parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight));
+    setInterval(render, 16)
+
+
+</script>
+<div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
+<div><a href="https://www.facebook.com/groups/bs5js/" target="_blank">facebook Group</a></div>
+<div><a href="https://github.com/projectBS/webGL" target="_blank">github</a></div>
+</body>
+</html>
+
+
