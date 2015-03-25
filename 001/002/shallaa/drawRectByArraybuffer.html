@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>BS WebGL 소모임 1기 실습</title>
+    <style>
+        body, html {
+            height:100%;
+            padding:0px;
+            margin:0px;
+        }
+    </style>
+    <script>
+        ( function(W){
+            W['requestAnimFrame'] = ( function(){
+                return W['requestAnimationFrame'] ||
+                        W['webkitRequestAnimationFrame'] ||
+                        W['mozRequestAnimationFrame'] ||
+                        W['oRequestAnimationFrame'] ||
+                        W['msRequestAnimationFrame'] ||
+                        function(callback){ return W.setTimeout( callback, 1000 / 60 ); };
+            } )();
+            W['cancelRequestAnimFrame'] = ( function(){
+                return W['cancelCancelRequestAnimationFrame'] ||
+                        W['webkitCancelRequestAnimationFrame'] ||
+                        W['mozCancelRequestAnimationFrame'] ||
+                        W['oCancelRequestAnimationFrame'] ||
+                        W['msCancelRequestAnimationFrame'] ||
+                        W.clearTimeout;
+            } )();
+        } )(this);
+    </script>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+    (function(){
+        'use strict';
+        var canvas = document.getElementById('canvas'), gl;
+
+        ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl'].some(function(k){ return gl = canvas.getContext(k); });
+        if( gl ) console.log('WebGL 초기화 성공');
+        else console.log('WebGL 초기화 실패');
+
+        canvas.width = 600, canvas.height = 600;
+        gl.viewport( 0, 0, 600, 600 );
+
+        var rectData = [
+            -0.5, -0.5, 0.0,
+            -0.5,  0.5, 0.0,
+            0.5, -0.5, 0.0,
+
+            -0.5,  0.5, 0.0,
+            0.5, -0.5, 0.0,
+            0.5,  0.5, 0.0
+        ];
+
+        var rectBuffer = gl.createBuffer();
+        gl.bindBuffer( gl.ARRAY_BUFFER, rectBuffer );
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(rectData), gl.STATIC_DRAW );
+        rectBuffer.itemSize = 3;
+        rectBuffer.numItem = 6;
+
+        var vertexShaderStr = '' +
+                'attribute vec3 aVertexPosition;' +
+                'uniform vec3 uRotation;' +
+                'uniform vec3 uPosition;' +
+                'uniform vec3 uScale;' +
+                'mat4 positionMTX( vec3 t ){' +
+                '    return mat4(    1,    0,    0, 0, ' +
+                '                    0,    1,    0, 0, ' +
+                '                    0,    0,    1, 0, ' +
+                '                 t[0], t[1], t[2], 1 );' +
+                '}' +
+                'mat4 scaleMTX( vec3 t ){' +
+                '    return mat4( t[0],    0,    0, 0,' +
+                '                    0, t[1],    0, 0,' +
+                '                    0,    0, t[2], 0,' +
+                '                    0,    0,    0, 1 );' +
+                '}' +
+                'mat4 rotationMTX( vec3 t ){' +
+                '    float s = sin(t[0]);' +
+                '    float c = cos(t[0]);' +
+                '    mat4 m1 = mat4( 1, 0,  0, 0, ' +
+                '                    0, c, -s, 0, ' +
+                '                    0, s,  c, 0, ' +
+                '                    0, 0,  0, 1 );' +
+                '    s = sin(t[1]);' +
+                '    c = cos(t[1]);' +
+                '    mat4 m2 = mat4(  c, 0, s, 0, ' +
+                '                     0, 1, 0, 0, ' +
+                '                    -s, 0, c, 0, ' +
+                '                     0, 0, 0, 1 );' +
+                '    s = sin(t[2]);' +
+                '    c = cos(t[2]);' +
+                '    mat4 m3 = mat4( c, -s, 0, 0, ' +
+                '                    s,  c, 0, 0, ' +
+                '                    0,  0, 1, 0, ' +
+                '                    0,  0, 0, 1 );' +
+                '    return m3 * m2 * m1;' +
+                '}' +
+                'void main(void){' +
+                '    gl_Position = positionMTX(uPosition) * rotationMTX(uRotation) * scaleMTX(uScale) * vec4( aVertexPosition, 1.0 );' +
+                '}';
+
+        var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource( vertexShader, vertexShaderStr );
+        gl.compileShader(vertexShader);
+
+        if( !gl.getShaderParameter( vertexShader, gl.COMPILE_STATUS ) ){
+            console.log( 'Error compiling shader: ' + gl.getShaderInfoLog(vertexShader) );
+        }
+
+        var fragmentShaderStr = '' +
+                'precision mediump float;' +
+                'void main(void){' +
+                '    gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );' +
+                '}';
+
+        var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource( fragmentShader, fragmentShaderStr );
+        gl.compileShader(fragmentShader);
+
+        if( !gl.getShaderParameter( fragmentShader, gl.COMPILE_STATUS ) ){
+            console.log( 'Error compiling shader: ' + gl.getShaderInfoLog(fragmentShader) );
+        }
+
+        var firstProgram = gl.createProgram();
+        gl.attachShader( firstProgram, vertexShader );
+        gl.attachShader( firstProgram, fragmentShader );
+        gl.linkProgram(firstProgram);
+
+        if( !gl.getProgramParameter( firstProgram, gl.LINK_STATUS ) ){
+            console.log('Error link program');
+        }
+
+        firstProgram.aVertexPosition = gl.getAttribLocation( firstProgram, 'aVertexPosition' );
+        firstProgram.uRotation       = gl.getUniformLocation( firstProgram, 'uRotation' );
+        firstProgram.uPosition       = gl.getUniformLocation( firstProgram, 'uPosition' );
+        firstProgram.uScale          = gl.getUniformLocation( firstProgram, 'uScale' );
+
+        ( function render(){
+            gl.clearColor( 0, 0, 0, 1 );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+            gl.useProgram(firstProgram);
+            gl.bindBuffer( gl.ARRAY_BUFFER, rectBuffer );
+            gl.enableVertexAttribArray( firstProgram.aVertexPosition );
+            gl.vertexAttribPointer( firstProgram.aVertexPosition, rectBuffer.itemSize, gl.FLOAT, false, 0, 0 );
+
+            gl.uniform3fv( firstProgram.uRotation, [0, 0, 0] );
+            gl.uniform3fv( firstProgram.uPosition, [0, 0, 0] );
+            gl.uniform3fv( firstProgram.uScale, [1, 1, 1] );
+
+            gl.drawArrays( gl.TRIANGLES, 0, rectBuffer.numItem );
+
+            requestAnimFrame(render);
+        } )();
+    })();
+</script>
+</body>
+</html>
