@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>BS WebGL 소모임 1기 실습</title>
+    <style>
+        body, html {
+            height:100%;
+            padding:0px;
+            margin:0px;
+        }
+    </style>
+    <script>
+        ( function(W){
+            W['requestAnimFrame'] = ( function(){
+                return W['requestAnimationFrame'] ||
+                        W['webkitRequestAnimationFrame'] ||
+                        W['mozRequestAnimationFrame'] ||
+                        W['oRequestAnimationFrame'] ||
+                        W['msRequestAnimationFrame'] ||
+                        function(callback){ return W.setTimeout( callback, 1000 / 60 ); };
+            } )();
+            W['cancelRequestAnimFrame'] = ( function(){
+                return W['cancelCancelRequestAnimationFrame'] ||
+                        W['webkitCancelRequestAnimationFrame'] ||
+                        W['mozCancelRequestAnimationFrame'] ||
+                        W['oCancelRequestAnimationFrame'] ||
+                        W['msCancelRequestAnimationFrame'] ||
+                        W.clearTimeout;
+            } )();
+        } )(this);
+    </script>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+    (function(){
+        'use strict';
+        var canvas = document.getElementById('canvas'), gl;
+
+        ['webgl', 'experimental-webgl', 'webkit-3d', 'moz-webgl'].some(function(k){ return gl = canvas.getContext(k); });
+        if( gl ) console.log('WebGL 초기화 성공');
+        else console.log('WebGL 초기화 실패');
+
+        canvas.width = 1000, canvas.height = 600;
+        gl.viewport( 0, 0, 1000, 600 );
+
+        var rectData = [
+            -0.5, -0.5, 0.0, // 0 - left bottom
+            -0.5,  0.5, 0.0, // 1 - left top
+            0.5, -0.5, 0.0, // 2 - right bottom
+            0.5,  0.5, 0.0  // 3 - right top
+        ];
+
+        var rectBuffer = gl.createBuffer();
+        gl.bindBuffer( gl.ARRAY_BUFFER, rectBuffer );
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(rectData), gl.STATIC_DRAW );
+        rectBuffer.itemSize = 3;
+        rectBuffer.numItem = 4;
+
+        var rectIndexData = [
+            0, 1, 2,
+            1, 2, 3
+        ];
+
+        var rectIndexBuffer = gl.createBuffer();
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, rectIndexBuffer );
+        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(rectIndexData), gl.STATIC_DRAW );
+        rectIndexBuffer.itemSize = 1;
+        rectIndexBuffer.numItem = 6;
+
+        var vertexShaderStr = '' +
+                'attribute vec3 aVertexPosition;' +
+                'attribute vec3 aRotation;' +
+                'attribute vec3 aPosition;' +
+                'attribute vec3 aScale;' +
+                'attribute vec3 aColor;' +
+                'varying vec3 vColor;' +
+                'mat4 positionMTX( vec3 t ){' +
+                '    return mat4(    1,    0,    0, 0, ' +
+                '                    0,    1,    0, 0, ' +
+                '                    0,    0,    1, 0, ' +
+                '                 t[0], t[1], t[2], 1 );' +
+                '}' +
+                'mat4 scaleMTX( vec3 t ){' +
+                '    return mat4( t[0],    0,    0, 0,' +
+                '                    0, t[1],    0, 0,' +
+                '                    0,    0, t[2], 0,' +
+                '                    0,    0,    0, 1 );' +
+                '}' +
+                'mat4 rotationMTX( vec3 t ){' +
+                '    float s = sin(t[0]);' +
+                '    float c = cos(t[0]);' +
+                '    mat4 m1 = mat4( 1, 0,  0, 0, ' +
+                '                    0, c, -s, 0, ' +
+                '                    0, s,  c, 0, ' +
+                '                    0, 0,  0, 1 );' +
+                '    s = sin(t[1]);' +
+                '    c = cos(t[1]);' +
+                '    mat4 m2 = mat4(  c, 0, s, 0, ' +
+                '                     0, 1, 0, 0, ' +
+                '                    -s, 0, c, 0, ' +
+                '                     0, 0, 0, 1 );' +
+                '    s = sin(t[2]);' +
+                '    c = cos(t[2]);' +
+                '    mat4 m3 = mat4( c, -s, 0, 0, ' +
+                '                    s,  c, 0, 0, ' +
+                '                    0,  0, 1, 0, ' +
+                '                    0,  0, 0, 1 );' +
+                '    return m3 * m2 * m1;' +
+                '}' +
+                'void main(void){' +
+                '    gl_Position = positionMTX(aPosition) * rotationMTX(aRotation) * scaleMTX(aScale) * vec4( aVertexPosition, 1.0 );' +
+                '    vColor = aColor;' +
+                '}';
+
+        var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource( vertexShader, vertexShaderStr );
+        gl.compileShader(vertexShader);
+
+        if( !gl.getShaderParameter( vertexShader, gl.COMPILE_STATUS ) ){
+            console.log( 'Error compiling shader: ' + gl.getShaderInfoLog(vertexShader) );
+        }
+
+        var fragmentShaderStr = '' +
+                'precision mediump float;' +
+                'varying vec3 vColor;' +
+                'void main(void){' +
+                '    gl_FragColor = vec4( vColor, 1.0 );' +
+                '}';
+
+        var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource( fragmentShader, fragmentShaderStr );
+        gl.compileShader(fragmentShader);
+
+        if( !gl.getShaderParameter( fragmentShader, gl.COMPILE_STATUS ) ){
+            console.log( 'Error compiling shader: ' + gl.getShaderInfoLog(fragmentShader) );
+        }
+
+        var colorProgram = gl.createProgram();
+        gl.attachShader( colorProgram, vertexShader );
+        gl.attachShader( colorProgram, fragmentShader );
+        gl.linkProgram(colorProgram);
+
+        if( !gl.getProgramParameter( colorProgram, gl.LINK_STATUS ) ){
+            console.log('Error link program');
+        }
+
+        colorProgram.aVertexPosition = gl.getAttribLocation( colorProgram, 'aVertexPosition' );
+        colorProgram.aRotation       = gl.getAttribLocation( colorProgram, 'aRotation' );
+        colorProgram.aPosition       = gl.getAttribLocation( colorProgram, 'aPosition' );
+        colorProgram.aScale          = gl.getAttribLocation( colorProgram, 'aScale' );
+        colorProgram.aColor          = gl.getAttribLocation( colorProgram, 'aColor' );
+
+        function Mesh(){
+            var result = {
+                program:colorProgram,
+                vbo:rectBuffer,
+                ibo:rectIndexBuffer,
+                position:new Float32Array([0, 0, 0]),
+                rotation:new Float32Array([Math.random(), Math.random(), Math.random()]),
+                scale:new Float32Array([1, 1, 1]),
+                material:new Float32Array([Math.random(), Math.random(), Math.random()])
+            };
+            return result;
+        }
+
+        function mergeMesh(list){
+            var item, i = 0, j = list.length;
+            var tempVBO = [], tempIBO = [];
+            var tempScaleBO = [];
+            var tempRotationBO = [];
+            var tempPositionBO = [];
+            var tempColorBO = [];
+            var idxIbo;
+
+            for( ; i < j; i++ ){
+                item = list[i];
+
+                tempVBO.push( rectData[0], rectData[1],  rectData[2] );
+                tempVBO.push( rectData[3], rectData[4],  rectData[5] );
+                tempVBO.push( rectData[6], rectData[7],  rectData[8] );
+                tempVBO.push( rectData[9], rectData[10], rectData[11] );
+
+                idxIbo = i * 4;
+
+                tempIBO.push( idxIbo + 0, idxIbo + 1, idxIbo + 2, idxIbo + 1, idxIbo + 2, idxIbo + 3 );
+
+                tempPositionBO.push( item.position[0], item.position[1], 0 );
+                tempPositionBO.push( item.position[0], item.position[1], 0 );
+                tempPositionBO.push( item.position[0], item.position[1], 0 );
+                tempPositionBO.push( item.position[0], item.position[1], 0 );
+
+                tempRotationBO.push( item.rotation[0], item.rotation[1], item.rotation[2] );
+                tempRotationBO.push( item.rotation[0], item.rotation[1], item.rotation[2] );
+                tempRotationBO.push( item.rotation[0], item.rotation[1], item.rotation[2] );
+                tempRotationBO.push( item.rotation[0], item.rotation[1], item.rotation[2] );
+
+                tempScaleBO.push( item.scale[0], item.scale[1], item.scale[2] );
+                tempScaleBO.push( item.scale[0], item.scale[1], item.scale[2] );
+                tempScaleBO.push( item.scale[0], item.scale[1], item.scale[2] );
+                tempScaleBO.push( item.scale[0], item.scale[1], item.scale[2] );
+
+                tempColorBO.push( item.material[0], item.material[1], item.material[2] );
+                tempColorBO.push( item.material[0], item.material[1], item.material[2] );
+                tempColorBO.push( item.material[0], item.material[1], item.material[2] );
+                tempColorBO.push( item.material[0], item.material[1], item.material[2] );
+            }
+
+            var vboBuffer = gl.createBuffer();
+            gl.bindBuffer( gl.ARRAY_BUFFER, vboBuffer );
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(tempVBO), gl.STATIC_DRAW );
+            vboBuffer.itemSize = 2;
+            vboBuffer.numItem = 4 * j;
+
+            var iboBuffer = gl.createBuffer();
+            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iboBuffer );
+            gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(tempIBO), gl.STATIC_DRAW );
+            iboBuffer.itemSize = 1;
+            iboBuffer.numItem = 6 * j;
+
+            var positionBuffer = gl.createBuffer();
+            gl.bindBuffer( gl.ARRAY_BUFFER, positionBuffer );
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(tempPositionBO), gl.STATIC_DRAW );
+            positionBuffer.itemSize = 3;
+            positionBuffer.numItem = 4 * j;
+
+            var rotationBuffer = gl.createBuffer();
+            var data = new Float32Array(tempRotationBO);
+            gl.bindBuffer( gl.ARRAY_BUFFER, rotationBuffer );
+            gl.bufferData( gl.ARRAY_BUFFER, data, gl.STATIC_DRAW );
+            rotationBuffer.data = data;
+            rotationBuffer.itemSize = 3;
+            rotationBuffer.numItem = 4 * j;
+
+            var scaleBuffer = gl.createBuffer();
+            gl.bindBuffer( gl.ARRAY_BUFFER, scaleBuffer );
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(tempScaleBO), gl.STATIC_DRAW );
+            scaleBuffer.itemSize = 3;
+            scaleBuffer.numItem = 4 * j;
+
+            var colorBuffer = gl.createBuffer();
+            gl.bindBuffer( gl.ARRAY_BUFFER, colorBuffer );
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(tempColorBO), gl.STATIC_DRAW );
+            colorBuffer.itemSize = 3;
+            colorBuffer.numItem = 4 * j;
+
+            var mesh = new Mesh();
+            mesh.vbo = vboBuffer;
+            mesh.ibo = iboBuffer;
+            mesh.rotationBo = rotationBuffer;
+            mesh.positionBo = positionBuffer;
+            mesh.scaleBo = scaleBuffer;
+            mesh.colorBo = colorBuffer;
+
+            return mesh;
+        }
+
+        var children = [], i = 0, item;
+
+        for( ; i < 10000; i++ ){
+            item = new Mesh();
+            item.position[0] = Math.random() * 2 - 1;
+            item.position[1] = Math.random() * 2 - 1;
+            item.scale[0] = item.scale[1] = item.scale[2] = Math.random() / 10;
+            children.push(item);
+        }
+
+        children = [mergeMesh(children)];
+        console.log(children);
+
+        ( function render(){
+            gl.clearColor( 0, 0, 0, 1 );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+            var item, program, vbo, ibo, i = children.length;
+
+            gl.enableVertexAttribArray( colorProgram.aVertexPosition );
+            gl.enableVertexAttribArray( colorProgram.aRotation );
+            gl.enableVertexAttribArray( colorProgram.aPosition );
+            gl.enableVertexAttribArray( colorProgram.aScale );
+            gl.enableVertexAttribArray( colorProgram.aColor );
+
+            while( i-- ){
+                item = children[i];
+                program = item.program;
+                ibo = item.ibo;
+
+                var temp = item.rotationBo.data, j = 0, k = temp.length / 12, gap, start;
+
+                for( ; j < k; j++ ){
+                    gap = 0.01;
+                    start = j * 12;
+                    temp[start++] += gap, temp[start++] += gap, temp[start++] += gap;
+                    temp[start++] += gap, temp[start++] += gap, temp[start++] += gap;
+                    temp[start++] += gap, temp[start++] += gap, temp[start++] += gap;
+                    temp[start++] += gap, temp[start++] += gap, temp[start++] += gap;
+                }
+
+                gl.useProgram(program);
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, item.rotationBo );
+                gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(temp), gl.STATIC_DRAW );
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, item.vbo );
+                gl.vertexAttribPointer( program.aVertexPosition, item.vbo.itemSize, gl.FLOAT, false, 0, 0 );
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, item.rotationBo );
+                gl.vertexAttribPointer( program.aRotation, item.rotationBo.itemSize, gl.FLOAT, false, 0, 0 );
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, item.positionBo );
+                gl.vertexAttribPointer( program.aPosition, item.positionBo.itemSize, gl.FLOAT, false, 0, 0 );
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, item.scaleBo );
+                gl.vertexAttribPointer( program.aScale, item.scaleBo.itemSize, gl.FLOAT, false, 0, 0 );
+
+                gl.bindBuffer( gl.ARRAY_BUFFER, item.colorBo );
+                gl.vertexAttribPointer( program.aColor, item.colorBo.itemSize, gl.FLOAT, false, 0, 0 );
+
+                gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, ibo );
+                gl.drawElements( gl.TRIANGLES, ibo.numItem, gl.UNSIGNED_SHORT, 0 );
+            }
+
+            requestAnimFrame(render);
+        } )();
+    })();
+</script>
+</body>
+</html>
