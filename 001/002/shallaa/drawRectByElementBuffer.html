@@ -46,20 +46,28 @@
         gl.viewport( 0, 0, 600, 600 );
 
         var rectData = [
-            -0.5, -0.5, 0.0,
-            -0.5,  0.5, 0.0,
-            0.5, -0.5, 0.0,
-
-            -0.5,  0.5, 0.0,
-            0.5, -0.5, 0.0,
-            0.5,  0.5, 0.0
+            -0.5, -0.5, 0.0, // 0 - left bottom
+            -0.5,  0.5, 0.0, // 1 - left top
+            0.5, -0.5, 0.0, // 2 - right bottom
+            0.5,  0.5, 0.0  // 3 - right top
         ];
 
         var rectBuffer = gl.createBuffer();
         gl.bindBuffer( gl.ARRAY_BUFFER, rectBuffer );
         gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(rectData), gl.STATIC_DRAW );
         rectBuffer.itemSize = 3;
-        rectBuffer.numItem = 6;
+        rectBuffer.numItem = 4;
+
+        var rectIndexData = [
+            0, 1, 2,
+            1, 2, 3
+        ];
+
+        var rectIndexBuffer = gl.createBuffer();
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, rectIndexBuffer );
+        gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(rectIndexData), gl.STATIC_DRAW );
+        rectIndexBuffer.itemSize = 1;
+        rectIndexBuffer.numItem = 6;
 
         var vertexShaderStr = '' +
                 'attribute vec3 aVertexPosition;' +
@@ -152,7 +160,8 @@
             gl.uniform3fv( firstProgram.uPosition, [0, 0, 0] );
             gl.uniform3fv( firstProgram.uScale, [1, 1, 1] );
 
-            gl.drawArrays( gl.TRIANGLES, 0, rectBuffer.numItem );
+            gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, rectIndexBuffer );
+            gl.drawElements( gl.TRIANGLES, rectIndexBuffer.numItem, gl.UNSIGNED_SHORT, 0 );
 
             requestAnimFrame(render);
         } )();
