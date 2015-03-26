@@ -10,6 +10,7 @@
             margin:0px;
         }
     </style>
+    <script src="../../libs/stats.js"></script>
     <script>
         ( function(W){
             W['requestAnimFrame'] = ( function(){
@@ -269,6 +270,15 @@
         children = [mergeMesh(children)];
         console.log(children);
 
+        var stats = new Stats();
+        stats.setMode(0);
+
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+
+        document.body.appendChild(stats.domElement);
+
         ( function render(){
             gl.clearColor( 0, 0, 0, 1 );
             gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
@@ -320,7 +330,8 @@
                 gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, ibo );
                 gl.drawElements( gl.TRIANGLES, ibo.numItem, gl.UNSIGNED_SHORT, 0 );
             }
-
+            
+            stats.update();
             requestAnimFrame(render);
         } )();
     })();
