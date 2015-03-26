@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head lang="en">
     <meta charset="UTF-8">
@@ -210,7 +210,7 @@
             var vboBuffer = gl.createBuffer();
             gl.bindBuffer( gl.ARRAY_BUFFER, vboBuffer );
             gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(tempVBO), gl.STATIC_DRAW );
-            vboBuffer.itemSize = 2;
+            vboBuffer.itemSize = 3;
             vboBuffer.numItem = 4 * j;
 
             var iboBuffer = gl.createBuffer();
