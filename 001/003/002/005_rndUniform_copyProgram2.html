@@ -109,7 +109,7 @@
 
 
     var colorPrograms = []
-    for(var j = 0; j<300; j++){
+    for(var j = 0; j<100; j++){
 
         var colorProgram = gl.createProgram()
         gl.attachShader(colorProgram, vertexShader)
@@ -138,7 +138,7 @@
     var renderVBOBuffer = []
     var renderIDXBuffer = []
     var renderIBOBuffer = []
-    for (var i = 0; i < 300; i++) {
+    for (var i = 0; i < 100; i++) {
         renderVBOBuffer.push(gl.createBuffer())
         renderVBOBuffer[i].dirty=true
         renderIDXBuffer.push(gl.createBuffer())
