@@ -246,20 +246,20 @@
         var item = new Mesh()
         item.position[0] = Math.random() * 2 - 1
         item.position[1] = Math.random() * 2 - 1
-        item.scale[0] = item.scale[1] = item.scale[2] = 0.3
+        item.scale[0] = item.scale[1] = item.scale[2] = 0.2
         children.push(item)
 
         var item2 = new Mesh()
-        item2.position[0] = 0.15
-        item2.position[1] = 0.15
-        item2.scale[0] = item2.scale[1] = item2.scale[2] = 0.2
+        item2.position[0] = 0.1
+        item2.position[1] = 0.1
+        item2.scale[0] = item2.scale[1] = item2.scale[2] =item.scale[0]/2
         item2.material[0] = item2.material[1] = item2.material[2] = 0.2
         item.children.push(item2)
 
         var item3 = new Mesh()
         item3.position[0] = 0.15
         item3.position[1] = 0.15
-        item3.scale[0] = item3.scale[1] = item3.scale[2] = 0.1
+        item3.scale[0] = item3.scale[1] = item3.scale[2] =1
         item3.material[0] = 1
         item3.material[1] = item3.material[2] = 0
         item2.children.push(item3)
