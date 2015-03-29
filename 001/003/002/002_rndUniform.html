@@ -45,7 +45,7 @@
     console.log(rectIndexBuffer)
 
 
-    var depthSetting = 3
+    var depthSetting = 5
     // Vertex Shader
     var vertexShaderStr = "" +
             "attribute vec3 aVertexPosition;" +
@@ -155,9 +155,9 @@
             gl.enableVertexAttribArray(tProgram.aVertexPosition);
             gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
-//            tObject.rotation[0] += 0.01
-            tObject.rotation[1] += 0.01
-            tObject.rotation[2] += 0.01
+            tObject.rotation[0] += 0.01
+            tObject.rotation[1] += 0.1
+            tObject.rotation[2] += 0.1
 
             gl.uniform3fv(tProgram['uRotation[0]'], tObject.rotation)
             gl.uniform3fv(tProgram['uPosition[0]'], tObject.position)
@@ -180,9 +180,9 @@
                 gl.enableVertexAttribArray(tProgram.aVertexPosition);
                 gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
-//                tObject2.rotation[0] += 0.01
-                tObject2.rotation[1] += 0.01
-                tObject2.rotation[2] += 0.01
+                tObject2.rotation[0] += 0.01
+                tObject2.rotation[1] += 0.1
+                tObject2.rotation[2] += 0.1
 
                 gl.uniform3fv(tProgram['uRotation[1]'], tObject2.rotation)
                 gl.uniform3fv(tProgram['uPosition[1]'], tObject2.position)
