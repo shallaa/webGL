@@ -2,7 +2,7 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>bsWebGL 소모임 1기 003 - rndUniform</title>
+    <title>bsWebGL 소모임 1기 003 - 002_rndUniform</title>
     <style>body, html {
         width: 100%;
         padding: 0px;
@@ -45,13 +45,14 @@
     console.log(rectIndexBuffer)
 
 
+    var depthSetting = 3
     // Vertex Shader
     var vertexShaderStr = "" +
             "attribute vec3 aVertexPosition;" +
             "uniform int uLevel;" +
-            "uniform vec3 uRotation[10];" +
-            "uniform vec3 uPosition[10];" +
-            "uniform vec3 uScale[10];" +
+            "uniform vec3 uRotation[" + depthSetting + "];" +
+            "uniform vec3 uPosition[" + depthSetting + "];" +
+            "uniform vec3 uScale[" + depthSetting + "];" +
             "uniform vec3 uColor;" +
             "varying vec3 vColor;" +
                 // 포지션 매트릭스 함수
@@ -80,28 +81,30 @@
             "   scaleMTX(uScale[0]) * " +
             "   vec4(aVertexPosition, 1.0);" +
             "   vColor = uColor;" +
-            "}else if(uLevel==1){\n" +
-            " gl_Position = " +
-            "   positionMTX(uPosition[0]) * " +
-            "   rotationMTX(uRotation[0]) * " +
-            "   positionMTX(uPosition[1]) * " +
-            "   rotationMTX(uRotation[1]) * " +
-            "   scaleMTX(uScale[0]*uScale[1]) * " +
-            "   vec4(aVertexPosition, 1.0);" +
-            "   vColor = uColor;" +
-            "}else if(uLevel==2){\n" +
-            " gl_Position = " +
-            "   positionMTX(uPosition[0]) * " +
-            "   rotationMTX(uRotation[0]) * " +
-            "   positionMTX(uPosition[1]) * " +
-            "   rotationMTX(uRotation[1]) * " +
-            "   positionMTX(uPosition[2]) * " +
-            "   rotationMTX(uRotation[2]) * " +
-            "   scaleMTX(uScale[0]*uScale[1]*uScale[2]) * " +
-            "   vec4(aVertexPosition, 1.0);" +
-            "   vColor = uColor;" +
-            "}\n" +
             "}"
+
+    for (var i = 1; i < depthSetting; i++) {
+        vertexShaderStr += "" +
+        "else if(uLevel==" + i + "){\n" +
+        " gl_Position = "
+        for (var j = 0; j < i + 1; j++) {
+            vertexShaderStr += "   positionMTX(uPosition[" + j + "]) * "
+            vertexShaderStr += "   rotationMTX(uRotation[" + j + "]) * "
+        }
+        vertexShaderStr += "scaleMTX("
+        for (j = 0; j < i + 1; j++) {
+            vertexShaderStr += 'uScale[' + j + ']'
+            if (j != i) vertexShaderStr += '*'
+        }
+        vertexShaderStr += ")*"
+        vertexShaderStr += "" +
+        "   vec4(aVertexPosition, 1.0);" +
+        "   vColor = uColor;" +
+        "}"
+    }
+    console.log(vertexShaderStr)
+
+    vertexShaderStr += "}"
     var vertexShader = gl.createShader(gl.VERTEX_SHADER)
     gl.shaderSource(vertexShader, vertexShaderStr)
     gl.compileShader(vertexShader)
@@ -125,17 +128,12 @@
     console.log(colorProgram)
 
     colorProgram.aVertexPosition = gl.getAttribLocation(colorProgram, "aVertexPosition");
-    colorProgram['uRotation[0]'] = gl.getUniformLocation(colorProgram, "uRotation[0]");
-    colorProgram['uRotation[1]'] = gl.getUniformLocation(colorProgram, "uRotation[1]");
-    colorProgram['uRotation[2]'] = gl.getUniformLocation(colorProgram, "uRotation[2]");
+    for (var i = 0; i < depthSetting; i++) {
+        colorProgram['uRotation[' + i + ']'] = gl.getUniformLocation(colorProgram, 'uRotation[' + i + ']');
+        colorProgram['uPosition[' + i + ']'] = gl.getUniformLocation(colorProgram, 'uPosition[' + i + ']');
+        colorProgram['uScale[' + i + ']'] = gl.getUniformLocation(colorProgram, 'uScale[' + i + ']');
+    }
 
-    colorProgram['uPosition[0]'] = gl.getUniformLocation(colorProgram, "uPosition[0]");
-    colorProgram['uPosition[1]'] = gl.getUniformLocation(colorProgram, "uPosition[1]");
-    colorProgram['uPosition[2]'] = gl.getUniformLocation(colorProgram, "uPosition[2]");
-
-    colorProgram['uScale[0]'] = gl.getUniformLocation(colorProgram, "uScale[0]");
-    colorProgram['uScale[1]'] = gl.getUniformLocation(colorProgram, "uScale[1]");
-    colorProgram['uScale[2]'] = gl.getUniformLocation(colorProgram, "uScale[2]");
 
     colorProgram.uColor = gl.getUniformLocation(colorProgram, "uColor");
     colorProgram.uLevel = gl.getUniformLocation(colorProgram, "uLevel");
@@ -158,7 +156,7 @@
             gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
 //            tObject.rotation[0] += 0.01
-//            tObject.rotation[1] += 0.01
+            tObject.rotation[1] += 0.01
             tObject.rotation[2] += 0.01
 
             gl.uniform3fv(tProgram['uRotation[0]'], tObject.rotation)
@@ -183,7 +181,7 @@
                 gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
 //                tObject2.rotation[0] += 0.01
-//                tObject2.rotation[1] += 0.01
+                tObject2.rotation[1] += 0.01
                 tObject2.rotation[2] += 0.01
 
                 gl.uniform3fv(tProgram['uRotation[1]'], tObject2.rotation)
@@ -246,20 +244,20 @@
         var item = new Mesh()
         item.position[0] = Math.random() * 2 - 1
         item.position[1] = Math.random() * 2 - 1
-        item.scale[0] = item.scale[1] = item.scale[2] = 0.2
+        item.scale[0] = item.scale[1] = item.scale[2] = 0.1
         children.push(item)
 
         var item2 = new Mesh()
-        item2.position[0] = 0.1
-        item2.position[1] = 0.1
-        item2.scale[0] = item2.scale[1] = item2.scale[2] =item.scale[0]/2
-        item2.material[0] = item2.material[1] = item2.material[2] = 0.2
+        item2.position[0] = 0.05
+        item2.position[1] = 0.05
+        item2.scale[0] = item2.scale[1] = item2.scale[2] = item.scale[0] * 4
+        item2.material[0] = item2.material[1] = item2.material[2] = 0.3
         item.children.push(item2)
 
         var item3 = new Mesh()
-        item3.position[0] = 0.15
-        item3.position[1] = 0.15
-        item3.scale[0] = item3.scale[1] = item3.scale[2] =1
+        item3.position[0] = 0.02
+        item3.position[1] = 0.02
+        item3.scale[0] = item3.scale[1] = item3.scale[2] = item2.scale[0]
         item3.material[0] = 1
         item3.material[1] = item3.material[2] = 0
         item2.children.push(item3)
