@@ -121,7 +121,11 @@
         colorProgram['uScale[' + i + ']'] = gl.getUniformLocation(colorProgram, 'uScale[' + i + ']');
         colorProgram['uColor[' + i + ']'] = gl.getUniformLocation(colorProgram, 'uColor[' + i + ']');
     }
+    gl.enableVertexAttribArray(colorProgram.aVertexPosition);
+    gl.enableVertexAttribArray(colorProgram.aIDX);
     colorProgram.uLevel = gl.getUniformLocation(colorProgram, "uLevel");
+
+
 
     var children = []
 
@@ -202,11 +206,11 @@
 
             gl.useProgram(tProgram)
             gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
-            gl.enableVertexAttribArray(tProgram.aVertexPosition);
+
             gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, renderIDXBuffer[i]);
-            gl.enableVertexAttribArray(tProgram.aIDX);
+
             gl.vertexAttribPointer(tProgram.aIDX, renderIDXBuffer[i].itemSize, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)

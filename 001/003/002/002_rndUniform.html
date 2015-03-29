@@ -10,7 +10,7 @@
     }</style>
 </head>
 <body>
-<div>4뎁스 350개</div>
+<div>4뎁스 500개</div>
 <canvas id="glCanvas"></canvas>
 <script>
     var gl, keys = 'webgl,experimental-webgl,webkit-3d,moz-webgl'.split(','), i = keys.length
@@ -134,7 +134,7 @@
         colorProgram['uPosition[' + i + ']'] = gl.getUniformLocation(colorProgram, 'uPosition[' + i + ']');
         colorProgram['uScale[' + i + ']'] = gl.getUniformLocation(colorProgram, 'uScale[' + i + ']');
     }
-
+    gl.enableVertexAttribArray(colorProgram.aVertexPosition);
 
     colorProgram.uColor = gl.getUniformLocation(colorProgram, "uColor");
     colorProgram.uLevel = gl.getUniformLocation(colorProgram, "uLevel");
@@ -153,7 +153,7 @@
 
             gl.useProgram(tProgram)
             gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
-            gl.enableVertexAttribArray(tProgram.aVertexPosition);
+           
             gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
             tObject.rotation[0] += 0.1
@@ -178,7 +178,7 @@
 
                 gl.useProgram(tProgram)
                 gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
-                gl.enableVertexAttribArray(tProgram.aVertexPosition);
+               
                 gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
                 tObject2.rotation[0] += 0.01
@@ -203,7 +203,7 @@
 
                     gl.useProgram(tProgram)
                     gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
-                    gl.enableVertexAttribArray(tProgram.aVertexPosition);
+            
                     gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
                     gl.uniform3fv(tProgram['uRotation[2]'], tObject3.rotation)
@@ -225,7 +225,7 @@
 
                         gl.useProgram(tProgram)
                         gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
-                        gl.enableVertexAttribArray(tProgram.aVertexPosition);
+                       
                         gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
                         gl.uniform3fv(tProgram['uRotation[3]'], tObject4.rotation)
@@ -264,7 +264,7 @@
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // host Code
     //////////////////////////////////////////////////////////////////////////////////////////////////
-    for (var i = 0; i < 350; i++) {
+    for (var i = 0; i < 500; i++) {
         var item = new Mesh()
         item.position[0] = Math.random() * 2 - 1
         item.position[1] = Math.random() * 2 - 1
