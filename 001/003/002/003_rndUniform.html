@@ -241,7 +241,7 @@
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // host Code
     //////////////////////////////////////////////////////////////////////////////////////////////////
-    for (var i = 0; i < uniformMax * 50; i++) {
+    for (var i = 0; i < uniformMax * 200; i++) {
         var item = new Mesh()
         item.position[0] = Math.random() * 2 - 1
         item.position[1] = Math.random() * 2 - 1
@@ -250,7 +250,7 @@
 
     }
 
-    document.writeln('<br>numObject : '+uniformMax * 50)
+    document.writeln('<br>numObject : '+uniformMax * 200)
 
     document.writeln('<br>drawCall : '+ children.length / uniformMax)
 </script>
