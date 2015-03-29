@@ -237,7 +237,7 @@
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // host Code
     //////////////////////////////////////////////////////////////////////////////////////////////////
-    for (var i = 0; i < uniformMax * 100; i++) {
+    for (var i = 0; i < uniformMax * 50; i++) {
         var item = new Mesh()
         item.position[0] = Math.random() * 2 - 1
         item.position[1] = Math.random() * 2 - 1
@@ -246,7 +246,7 @@
 
     }
 
-    document.writeln('<br>numObject : '+uniformMax * 100)
+    document.writeln('<br>numObject : '+uniformMax * 50)
     document.writeln('<br>drawCall : '+ children.length / uniformMax)
 </script>
 <div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
