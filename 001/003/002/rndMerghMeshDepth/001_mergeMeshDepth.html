@@ -151,10 +151,12 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, tObject.levelBo);
             gl.vertexAttribPointer(tProgram.aLevel, tObject.levelBo.itemSize, gl.FLOAT, false, 0, 0);
 
-//            children[i].rotation[0] += 0.01
-//            children[i].rotation[1] += 0.01
+
             var dp1 = children[i]
             var dp2 = dp1.children[0]
+
+            dp1.rotation[0] += 0.1
+            dp1.rotation[1] += 0.1
             dp1.rotation[2] += 0.1
 
             gl.uniform3fv(tProgram['uPosition[0]'], dp1.position)
@@ -191,7 +193,7 @@
 
 
     // host Code
-    for (var i = 0; i < 500; i++) {
+    for (var i = 0; i < 2000; i++) {
         var item = new Mesh()
         item.position[0] = Math.random() * 2 - 1
         item.position[1] = Math.random() * 2 - 1
