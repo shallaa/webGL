@@ -139,35 +139,25 @@
             tProgram = tObject.program
             tIBO = tObject.ibo
 
-
             gl.useProgram(tProgram)
             gl.bindBuffer(gl.ARRAY_BUFFER, tObject.vbo);
             gl.vertexAttribPointer(tProgram.aVertexPosition, tObject.vbo.itemSize, gl.FLOAT, false, 0, 0);
             gl.bindBuffer(gl.ARRAY_BUFFER, tObject.colorBo);
             gl.vertexAttribPointer(tProgram.aColor, tObject.colorBo.itemSize, gl.FLOAT, false, 0, 0);
-
             gl.bindBuffer(gl.ARRAY_BUFFER, tObject.levelBo);
             gl.vertexAttribPointer(tProgram.aLevel, tObject.levelBo.itemSize, gl.FLOAT, false, 0, 0);
 
-
             var dp1 = children[i]
             var dp2 = dp1.children[0]
-
             dp1.rotation[0] += 0.1
             dp1.rotation[1] += 0.1
             dp1.rotation[2] += 0.1
-
             gl.uniformMatrix3fv(tProgram['uPRS[0]'], false, [dp1.position[0], dp1.position[1], dp1.position[2], dp1.rotation[0], dp1.rotation[1], dp1.rotation[2], dp1.scale[0], dp1.scale[1], dp1.scale[2]])
-
-//            dp2.rotation[0] += 0.1
-//            dp2.rotation[1] += 0.1
-//            dp2.rotation[2] += 0.1
             gl.uniformMatrix3fv(tProgram['uPRS[1]'], false, [dp2.position[0], dp2.position[1], dp2.position[2], dp2.rotation[0], dp2.rotation[1], dp2.rotation[2], dp2.scale[0], dp2.scale[1], dp2.scale[2]])
-
-
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
             gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
         }
+        requestAnimFrame(render);
     }
 
 
@@ -184,7 +174,6 @@
         }
         return result
     }
-
 
     // host Code
     for (var i = 0; i < 1000; i++) {
@@ -271,7 +260,7 @@
         buffer.data = $data
         buffer.itemSize = $size
         buffer.numItem = $num * $len
-        console.log(buffer)
+//        console.log(buffer)
         return buffer
     }
 
@@ -281,7 +270,15 @@
     if (cvs)  cvs.width = '1000', cvs.height = '600'
     console.log(parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight))
     gl.viewport(0, 0, parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight));
-    setInterval(render, 16)
+    window['requestAnimFrame'] = ( function(){
+        return window['requestAnimationFrame'] ||
+                window['webkitRequestAnimationFrame'] ||
+                window['mozRequestAnimationFrame'] ||
+                window['oRequestAnimationFrame'] ||
+                window['msRequestAnimationFrame'] ||
+                function(callback){ return W.setTimeout( callback, 1000 / 60 ); };
+    } )();
+    requestAnimFrame(render);
 
 
 </script>
