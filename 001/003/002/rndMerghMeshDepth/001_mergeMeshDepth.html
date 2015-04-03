@@ -153,15 +153,15 @@
 
 //            children[i].rotation[0] += 0.01
 //            children[i].rotation[1] += 0.01
-            children[i].rotation[2] += 0.01
+            children[i].rotation[2] += 0.1
 
             gl.uniform3fv(tProgram['uPosition[0]'], children[i].position)
             gl.uniform3fv(tProgram['uRotation[0]'], children[i].rotation)
             gl.uniform3fv(tProgram['uScale[0]'], children[i].scale)
 
-            children[i].children[0].rotation[0] += 0.01
-            children[i].children[0].rotation[1] += 0.01
-            children[i].children[0].rotation[2] += 0.01
+            children[i].children[0].rotation[0] += 0.1
+            children[i].children[0].rotation[1] += 0.1
+            children[i].children[0].rotation[2] += 0.1
 
             gl.uniform3fv(tProgram['uPosition[1]'], children[i].children[0].position)
             gl.uniform3fv(tProgram['uRotation[1]'], children[i].children[0].rotation)
