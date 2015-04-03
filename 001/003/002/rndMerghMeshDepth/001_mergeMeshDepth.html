@@ -153,19 +153,21 @@
 
 //            children[i].rotation[0] += 0.01
 //            children[i].rotation[1] += 0.01
-            children[i].rotation[2] += 0.1
+            var dp1 = children[i]
+            var dp2 = dp1.children[0]
+            dp1.rotation[2] += 0.1
 
-            gl.uniform3fv(tProgram['uPosition[0]'], children[i].position)
-            gl.uniform3fv(tProgram['uRotation[0]'], children[i].rotation)
-            gl.uniform3fv(tProgram['uScale[0]'], children[i].scale)
+            gl.uniform3fv(tProgram['uPosition[0]'], dp1.position)
+            gl.uniform3fv(tProgram['uRotation[0]'], dp1.rotation)
+            gl.uniform3fv(tProgram['uScale[0]'], dp1.scale)
 
-            children[i].children[0].rotation[0] += 0.1
-            children[i].children[0].rotation[1] += 0.1
-            children[i].children[0].rotation[2] += 0.1
+            dp2.rotation[0] += 0.1
+            dp2.rotation[1] += 0.1
+            dp2.rotation[2] += 0.1
 
-            gl.uniform3fv(tProgram['uPosition[1]'], children[i].children[0].position)
-            gl.uniform3fv(tProgram['uRotation[1]'], children[i].children[0].rotation)
-            gl.uniform3fv(tProgram['uScale[1]'], children[i].children[0].scale)
+            gl.uniform3fv(tProgram['uPosition[1]'], dp2.position)
+            gl.uniform3fv(tProgram['uRotation[1]'], dp2.rotation)
+            gl.uniform3fv(tProgram['uScale[1]'], dp2.scale)
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
             gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
