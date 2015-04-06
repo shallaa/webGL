@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>bsWebGL 소모임 1기 002 - 004_varying</title>
+    <style>body, html {
+        width: 100%;
+        padding: 0px;
+        margin: 0px
+    }</style>
+</head>
+<body>
+<canvas id="glCanvas"></canvas>
+<script>
+    var gl, keys = 'webgl,experimental-webgl,webkit-3d,moz-webgl'.split(','), i = keys.length
+    var cvs = document.getElementById('glCanvas')
+    while (i--) if (gl = cvs.getContext(keys[i])) break
+    if (gl) console.log('webgl 초기화 성공!')
+    else console.log('webgl 초기화 실패!')
+
+    // Vertex Buffer
+    var rectData = [
+        -.5, -.5, 0.0,
+        -.5, .5, 0.0,
+        .5, -.5, 0.0,
+        .5, .5, 0.0
+    ]
+    var rectBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, rectBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rectData), gl.STATIC_DRAW)
+    rectBuffer.itemSize = 3
+    rectBuffer.numItem = 4
+    console.log(rectBuffer)
+
+    var rectIndexData = [
+        0, 1, 2,
+        1, 2, 3
+    ]
+    var rectIndexBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rectIndexBuffer)
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(rectIndexData), gl.STATIC_DRAW)
+    rectIndexBuffer.itemSize = 1
+    rectIndexBuffer.numItem = 6
+    console.log(rectIndexBuffer)
+
+    var rectUVData = [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]
+    var rectUVBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rectUVData), gl.STATIC_DRAW)
+    rectUVBuffer.itemSize = 2 // UV는 2차원 좌표계다!
+    rectUVBuffer.numItem = 4
+
+    var firstTexture = gl.createTexture() // 텍스쳐 생성
+    firstTexture.img = new Image()
+    firstTexture.img.src = 'test.png'
+    firstTexture.img.onload = function () {
+        gl.bindTexture(gl.TEXTURE_2D, firstTexture)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, firstTexture.img);
+        // 이미지보간
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+//        gl.generateMipmap(gl.TEXTURE_2D)
+        gl.bindTexture(gl.TEXTURE_2D, null)
+    }
+
+
+    // Vertex Shader
+    var vertexShaderStr = "" +
+            "attribute vec3 aVertexPosition;" +
+            "attribute vec2 aUV;" +
+            "varying vec2 vUV;" +
+            "uniform vec3 uRotation;" +
+            "uniform vec3 uPosition;" +
+            "uniform vec3 uScale;" +
+                // 포지션 매트릭스 함수
+            "mat4 positionMTX(vec3 t)" +
+            "{" +
+            "   return mat4( 1,0,0,0, 0,1,0,0, 0,0,1,0, t[0],t[1],t[2],1);" +
+            "}" +
+            'mat4 scaleMTX(vec3 t)' +
+            '{' +
+            '   return mat4( t[0],0,0,0, 0,t[1],0,0, 0,0,t[2],0, 0,0,0,1);' +
+            '}' +
+                // 로테이션 매트릭스 함수
+            'mat4 rotationMTX(vec3 t)' +
+            '{' +
+            '   float s = sin(t[0]);float c = cos(t[0]);' +
+            '   mat4 m1 = mat4( 1,0,0,0, 0,c,-s,0, 0,s,c,0, 0,0,0,1);s = sin(t[1]);c = cos(t[1]);' +
+            '   mat4 m2 = mat4(c,0,s,0, 0,1,0,0, -s,0,c,0, 0,0,0,1);s = sin(t[2]);c = cos(t[2]);' +
+            '   mat4 m3 = mat4(c,-s,0,0, s,c,0,0, 0,0,1,0, 0,0,0,1);' +
+            '   return m3*m2*m1;' +
+            '}' +
+            "void main(void) {" +
+            " gl_Position = " +
+            "positionMTX(uPosition) * " +
+            "rotationMTX(uRotation) * " +
+            "scaleMTX(uScale) * " +
+            "vec4(aVertexPosition, 1.0);" +
+            "vUV = aUV;" +
+            "}"
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER)
+    gl.shaderSource(vertexShader, vertexShaderStr)
+    gl.compileShader(vertexShader)
+    console.log(vertexShader)
+
+    // Fragment Shader
+    var fragmentShaderStr = "precision mediump float;" +
+            'uniform sampler2D uSampler;' +
+            "varying vec2 vUV;" +
+            "void main(void) {" +
+            "gl_FragColor =  texture2D(uSampler, vec2(vUV.s, vUV.t));" +
+            "}"
+
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+    gl.shaderSource(fragmentShader, fragmentShaderStr)
+    gl.compileShader(fragmentShader)
+    console.log(fragmentShader)
+
+    var bitmapProgram = gl.createProgram()
+    gl.attachShader(bitmapProgram, vertexShader)
+    gl.attachShader(bitmapProgram, fragmentShader)
+    gl.linkProgram(bitmapProgram)
+    console.log(bitmapProgram)
+
+    bitmapProgram.aVertexPosition = gl.getAttribLocation(bitmapProgram, "aVertexPosition");
+    bitmapProgram.aUV = gl.getAttribLocation(bitmapProgram, "aUV");
+
+    gl.enableVertexAttribArray(bitmapProgram.aVertexPosition);
+    gl.enableVertexAttribArray(bitmapProgram.aUV);
+
+    bitmapProgram.uRotation = gl.getUniformLocation(bitmapProgram, "uRotation");
+    bitmapProgram.uPosition = gl.getUniformLocation(bitmapProgram, "uPosition");
+    bitmapProgram.uScale = gl.getUniformLocation(bitmapProgram, "uScale");
+    bitmapProgram.uSampler = gl.getUniformLocation(bitmapProgram, "uSampler");
+
+
+    var children = []
+    function render() {
+        gl.clearColor(0, 0, 0, 1)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+        var i = children.length
+        var tObject, tProgram, tVBO, tIBO
+        while (i--) {
+            tObject = children[i]
+            tProgram = tObject.program
+            tVBO = tObject.vbo
+            tIBO = tObject.ibo
+
+            gl.useProgram(tProgram)
+            gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
+            gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
+            gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+            tObject.rotation[2] += 0.01
+
+            gl.uniform3fv(tProgram.uRotation, tObject.rotation)
+            gl.uniform3fv(tProgram.uPosition, tObject.position)
+            gl.uniform3fv(tProgram.uScale, tObject.scale)
+
+            gl.bindTexture(gl.TEXTURE_2D, tObject.material);
+            // 바인딩했으니 프레그먼트에 선언한 샘플러로 텍스쳐를 보낼 수있습니다.
+            gl.uniform1i(tProgram.uSampler, 0);
+
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
+            gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
+        }
+    }
+
+
+    function Mesh() {
+        var result = {
+            program: bitmapProgram,
+            vbo: rectBuffer,
+            ibo: rectIndexBuffer,
+            position: new Float32Array([0, 0, 0]),
+            rotation: new Float32Array([0, 0, 0]),
+            scale: new Float32Array([1, 1, 1]),
+            material: firstTexture
+        }
+        return result
+    }
+
+    // host Code
+    var item = new Mesh()
+    children.push(item)
+
+    if (cvs)  cvs.width = '1280', cvs.height = '600'
+    console.log(parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight))
+    gl.viewport(0, 0, parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight));
+    setInterval(render, 16)
+</script>
+<div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
+<div><a href="https://www.facebook.com/groups/bs5js/" target="_blank">facebook Group</a></div>
+<div><a href="https://github.com/projectBS/webGL" target="_blank">github</a></div>
+</body>
+</html>
+
+
