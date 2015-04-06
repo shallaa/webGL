@@ -61,8 +61,9 @@
         gl.bindTexture(gl.TEXTURE_2D, firstTexture)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, firstTexture.img);
         // 이미지보간
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.generateMipmap(gl.TEXTURE_2D)
         gl.bindTexture(gl.TEXTURE_2D, null)
     }
 
@@ -160,7 +161,7 @@
     function render() {
         gl.clearColor(0, 0, 0, 1)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.ALWAYS)
+//        gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
         var i = children.length
         var tObject, tProgram, tVBO, tIBO
         while (i--) {
@@ -177,7 +178,8 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
             gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-
+            tObject.rotation[0] += 0.01
+            tObject.rotation[1] += 0.01
             tObject.rotation[2] += 0.01
 
             gl.uniform3fv(tProgram['uRotation[0]'], tObject.rotation)
@@ -199,6 +201,8 @@
                 tVBO = tObject2.vbo
                 tIBO = tObject2.ibo
 
+
+                tObject2.rotation[2] += 0.01
                 gl.useProgram(tProgram)
                 gl.uniformMatrix4fv(bitmapProgram.uPixelMatrix, false, uPixelMatrix)
                 gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
@@ -206,9 +210,6 @@
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
                 gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-
-                tObject2.rotation[2] += 0.01
 
                 gl.uniform3fv(tProgram['uRotation[1]'], tObject2.rotation)
                 gl.uniform3fv(tProgram['uPosition[1]'], tObject2.position)
@@ -243,11 +244,11 @@
     // host Code
     var item = new Mesh()
     children.push(item)
-    for(var  i = 0; i<5; i++){
+    for (var i = 0; i < 5; i++) {
         var item2 = new Mesh()
-        item2.scale = [256,256,1]
-        item2.position[0] = Math.random()*512 - 256
-        item2.position[1] = Math.random()*512 - 256
+        item2.scale = [128, 128, 1]
+        item2.position[0] = Math.random() * 600 - 300
+        item2.position[1] = Math.random() * 600 - 300
         item.children.push(item2)
     }
 
@@ -265,7 +266,7 @@
         cvs.style.height = 600 + 'px'
     }
     gl.viewport(0, 0, parseInt(cvs.width), +parseInt(cvs.height));
-    setInterval(render, 16)
+    setInterval(render, 15)
 </script>
 <div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
 <div><a href="https://www.facebook.com/groups/bs5js/" target="_blank">facebook Group</a></div>
