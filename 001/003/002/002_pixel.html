@@ -183,7 +183,7 @@
             program: bitmapProgram,
             vbo: rectBuffer,
             ibo: rectIndexBuffer,
-            position: new Float32Array([0, 0, 0]),
+            position: new Float32Array([0, 0, 1000]),
             rotation: new Float32Array([0, 0, 0]),
             scale: new Float32Array([256, 256, 1]),
             material: firstTexture
@@ -202,13 +202,14 @@
         0, 0, 0, 1
     ]
 
+
     if (cvs) {
         cvs.width = '1280', cvs.height = '600'
         cvs.style.width = 1280 + 'px'
         cvs.style.height = 600 + 'px'
     }
     gl.viewport(0, 0, parseInt(cvs.width), +parseInt(cvs.height));
-    setInterval(render, 16)
+    setInterval(render, 15)
 </script>
 <div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
 <div><a href="https://www.facebook.com/groups/bs5js/" target="_blank">facebook Group</a></div>

@@ -11,6 +11,7 @@
 </head>
 <body>
 <canvas id="glCanvas"></canvas>
+<canvas id="texture" width="512" height="256" style="visibility: hidden"></canvas>
 <script>
     var gl, keys = 'webgl,experimental-webgl,webkit-3d,moz-webgl'.split(','), i = keys.length
     var cvs = document.getElementById('glCanvas')
@@ -20,10 +21,10 @@
 
     // Vertex Buffer
     var rectData = [
-        -0.5, -0.5, 0.0,
-        0.5, -0.5, 0.0,
-        -0.5, 0.5, 0.0,
-        0.5, 0.5, 0.0
+        -.5, -.5, 0.0,
+        -.5, .5, 0.0,
+        .5, -.5, 0.0,
+        .5, .5, 0.0
     ]
     var rectBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, rectBuffer)
@@ -33,7 +34,8 @@
     console.log(rectBuffer)
 
     var rectIndexData = [
-        0, 1, 2, 1, 2, 3
+        0, 1, 2,
+        1, 2, 3
     ]
     var rectIndexBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rectIndexBuffer)
@@ -42,12 +44,7 @@
     rectIndexBuffer.numItem = 6
     console.log(rectIndexBuffer)
 
-    var rectUVData = [
-        0.0, 0.0,
-        1.0, 0.0,
-        0.0, 1.0,
-        1.0, 1.0
-    ]
+    var rectUVData = [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]
     var rectUVBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rectUVData), gl.STATIC_DRAW)
@@ -55,17 +52,16 @@
     rectUVBuffer.numItem = 4
 
     var firstTexture = gl.createTexture() // 텍스쳐 생성
-    firstTexture.img = new Image()
-    firstTexture.img.src = 'test.png'
-    firstTexture.img.onload = function () {
-        gl.bindTexture(gl.TEXTURE_2D, firstTexture)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, firstTexture.img);
-        // 이미지보간
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.generateMipmap(gl.TEXTURE_2D)
-        gl.bindTexture(gl.TEXTURE_2D, null)
-    }
+    gl.bindTexture(gl.TEXTURE_2D, firstTexture)
+    var ctx = document.getElementById('texture').getContext('2d')
+    ctx.font = "48px serif";
+    ctx.fillText("Hello world", 10, 50);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('texture'));
+    // 이미지보간
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    //        gl.generateMipmap(gl.TEXTURE_2D)
+    gl.bindTexture(gl.TEXTURE_2D, null)
 
 
     // Vertex Shader
@@ -73,10 +69,8 @@
             "attribute vec3 aVertexPosition;" +
             "attribute vec2 aUV;" +
             "varying vec2 vUV;" +
-            "uniform mat4 uPixelMatrix;" +
-            "uniform vec3 uRotation[2];" +
-            "uniform vec3 uPosition[2];" +
-            "uniform int uLevel;" +
+            "uniform vec3 uRotation;" +
+            "uniform vec3 uPosition;" +
             "uniform vec3 uScale;" +
                 // 포지션 매트릭스 함수
             "mat4 positionMTX(vec3 t)" +
@@ -97,24 +91,11 @@
             '   return m3*m2*m1;' +
             '}' +
             "void main(void) {" +
-            "if(uLevel==0){" +
             " gl_Position = " +
-            "uPixelMatrix*" +
-            "positionMTX(uPosition[0]) * " +
-            "rotationMTX(uRotation[0]) * " +
+            "positionMTX(uPosition) * " +
+            "rotationMTX(uRotation) * " +
             "scaleMTX(uScale) * " +
             "vec4(aVertexPosition, 1.0);" +
-            "}" +
-            "else if(uLevel==1){" +
-            " gl_Position = " +
-            "uPixelMatrix*" +
-            "positionMTX(uPosition[0]) * " +
-            "rotationMTX(uRotation[0]) * " +
-            "positionMTX(uPosition[1]) * " +
-            "rotationMTX(uRotation[1]) * " +
-            "scaleMTX(uScale) * " +
-            "vec4(aVertexPosition, 1.0);" +
-            "}" +
             "vUV = aUV;" +
             "}"
     var vertexShader = gl.createShader(gl.VERTEX_SHADER)
@@ -129,6 +110,7 @@
             "void main(void) {" +
             "gl_FragColor =  texture2D(uSampler, vec2(vUV.s, vUV.t));" +
             "}"
+
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
     gl.shaderSource(fragmentShader, fragmentShaderStr)
     gl.compileShader(fragmentShader)
@@ -146,15 +128,10 @@
     gl.enableVertexAttribArray(bitmapProgram.aVertexPosition);
     gl.enableVertexAttribArray(bitmapProgram.aUV);
 
-    bitmapProgram['uRotation[0]'] = gl.getUniformLocation(bitmapProgram, "uRotation[0]");
-    bitmapProgram['uRotation[1]'] = gl.getUniformLocation(bitmapProgram, "uRotation[1]");
-    bitmapProgram['uPosition[0]'] = gl.getUniformLocation(bitmapProgram, "uPosition[0]");
-    bitmapProgram['uPosition[1]'] = gl.getUniformLocation(bitmapProgram, "uPosition[1]");
+    bitmapProgram.uRotation = gl.getUniformLocation(bitmapProgram, "uRotation");
+    bitmapProgram.uPosition = gl.getUniformLocation(bitmapProgram, "uPosition");
     bitmapProgram.uScale = gl.getUniformLocation(bitmapProgram, "uScale");
-    bitmapProgram.uLevel = gl.getUniformLocation(bitmapProgram, "uLevel");
-
     bitmapProgram.uSampler = gl.getUniformLocation(bitmapProgram, "uSampler");
-    bitmapProgram.uPixelMatrix = gl.getUniformLocation(bitmapProgram, "uPixelMatrix");
 
 
     var children = []
@@ -162,7 +139,6 @@
         gl.clearColor(0, 0, 0, 1)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-        gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         var i = children.length
         var tObject, tProgram, tVBO, tIBO
         while (i--) {
@@ -172,58 +148,24 @@
             tIBO = tObject.ibo
 
             gl.useProgram(tProgram)
-            gl.uniformMatrix4fv(bitmapProgram.uPixelMatrix, false, uPixelMatrix)
             gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
             gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
             gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-            tObject.rotation[0] += 0.01
-            tObject.rotation[1] += 0.01
             tObject.rotation[2] += 0.01
 
-            gl.uniform3fv(tProgram['uRotation[0]'], tObject.rotation)
-            gl.uniform3fv(tProgram['uPosition[0]'], tObject.position)
+            gl.uniform3fv(tProgram.uRotation, tObject.rotation)
+            gl.uniform3fv(tProgram.uPosition, tObject.position)
             gl.uniform3fv(tProgram.uScale, tObject.scale)
-            gl.uniform1i(tProgram.uLevel, 0)
 
             gl.bindTexture(gl.TEXTURE_2D, tObject.material);
+            // 바인딩했으니 프레그먼트에 선언한 샘플러로 텍스쳐를 보낼 수있습니다.
             gl.uniform1i(tProgram.uSampler, 0);
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
             gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
-
-            var j = tObject.children.length
-            var tObject2
-            while (j--) {
-                tObject2 = tObject.children[j]
-                tProgram = tObject2.program
-                tVBO = tObject2.vbo
-                tIBO = tObject2.ibo
-
-
-                tObject2.rotation[2] += 0.01
-                gl.useProgram(tProgram)
-                gl.uniformMatrix4fv(bitmapProgram.uPixelMatrix, false, uPixelMatrix)
-                gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
-                gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
-                gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-                gl.uniform3fv(tProgram['uRotation[1]'], tObject2.rotation)
-                gl.uniform3fv(tProgram['uPosition[1]'], tObject2.position)
-                gl.uniform3fv(tProgram.uScale, tObject2.scale)
-                gl.uniform1i(tProgram.uLevel, 1)
-
-                gl.bindTexture(gl.TEXTURE_2D, tObject2.material);
-                gl.uniform1i(tProgram.uSampler, 0);
-
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
-                gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
-
-            }
         }
     }
 
@@ -235,9 +177,8 @@
             ibo: rectIndexBuffer,
             position: new Float32Array([0, 0, 0]),
             rotation: new Float32Array([0, 0, 0]),
-            scale: new Float32Array([256, 256, 1]),
-            material: firstTexture,
-            children: []
+            scale: new Float32Array([1, 1, 1]),
+            material: firstTexture
         }
         return result
     }
@@ -245,29 +186,11 @@
     // host Code
     var item = new Mesh()
     children.push(item)
-    for (var i = 0; i < 5; i++) {
-        var item2 = new Mesh()
-        item2.scale = [128, 128, 1]
-        item2.position[0] = Math.random() * 600 - 300
-        item2.position[1] = Math.random() * 600 - 300
-        item.children.push(item2)
-    }
 
-
-    var uPixelMatrix = [
-        2 / 1280, 0, 0, 0,
-        0, 2 / 600, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 1
-    ]
-
-    if (cvs) {
-        cvs.width = '1280', cvs.height = '600'
-        cvs.style.width = 1280 + 'px'
-        cvs.style.height = 600 + 'px'
-    }
-    gl.viewport(0, 0, parseInt(cvs.width), +parseInt(cvs.height));
-    setInterval(render, 15)
+    if (cvs)  cvs.width = '1280', cvs.height = '600'
+    console.log(parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight))
+    gl.viewport(0, 0, parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight));
+    setInterval(render, 16)
 </script>
 <div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
 <div><a href="https://www.facebook.com/groups/bs5js/" target="_blank">facebook Group</a></div>
