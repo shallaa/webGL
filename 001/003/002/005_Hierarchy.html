@@ -73,8 +73,9 @@
             "attribute vec2 aUV;" +
             "varying vec2 vUV;" +
             "uniform mat4 uPixelMatrix;" +
-            "uniform vec3 uRotation;" +
-            "uniform vec3 uPosition;" +
+            "uniform vec3 uRotation[2];" +
+            "uniform vec3 uPosition[2];" +
+            "uniform int uLevel;" +
             "uniform vec3 uScale;" +
                 // 포지션 매트릭스 함수
             "mat4 positionMTX(vec3 t)" +
@@ -95,12 +96,24 @@
             '   return m3*m2*m1;' +
             '}' +
             "void main(void) {" +
+            "if(uLevel==0){" +
             " gl_Position = " +
             "uPixelMatrix*" +
-            "positionMTX(uPosition) * " +
-            "rotationMTX(uRotation) * " +
+            "positionMTX(uPosition[0]) * " +
+            "rotationMTX(uRotation[0]) * " +
             "scaleMTX(uScale) * " +
             "vec4(aVertexPosition, 1.0);" +
+            "}" +
+            "else if(uLevel==1){" +
+            " gl_Position = " +
+            "uPixelMatrix*" +
+            "positionMTX(uPosition[0]) * " +
+            "rotationMTX(uRotation[0]) * " +
+            "positionMTX(uPosition[1]) * " +
+            "rotationMTX(uRotation[1]) * " +
+            "scaleMTX(uScale) * " +
+            "vec4(aVertexPosition, 1.0);" +
+            "}" +
             "vUV = aUV;" +
             "}"
     var vertexShader = gl.createShader(gl.VERTEX_SHADER)
@@ -132,9 +145,13 @@
     gl.enableVertexAttribArray(bitmapProgram.aVertexPosition);
     gl.enableVertexAttribArray(bitmapProgram.aUV);
 
-    bitmapProgram.uRotation = gl.getUniformLocation(bitmapProgram, "uRotation");
-    bitmapProgram.uPosition = gl.getUniformLocation(bitmapProgram, "uPosition");
+    bitmapProgram['uRotation[0]'] = gl.getUniformLocation(bitmapProgram, "uRotation[0]");
+    bitmapProgram['uRotation[1]'] = gl.getUniformLocation(bitmapProgram, "uRotation[1]");
+    bitmapProgram['uPosition[0]'] = gl.getUniformLocation(bitmapProgram, "uPosition[0]");
+    bitmapProgram['uPosition[1]'] = gl.getUniformLocation(bitmapProgram, "uPosition[1]");
     bitmapProgram.uScale = gl.getUniformLocation(bitmapProgram, "uScale");
+    bitmapProgram.uLevel = gl.getUniformLocation(bitmapProgram, "uLevel");
+
     bitmapProgram.uSampler = gl.getUniformLocation(bitmapProgram, "uSampler");
     bitmapProgram.uPixelMatrix = gl.getUniformLocation(bitmapProgram, "uPixelMatrix");
 
@@ -143,7 +160,7 @@
     function render() {
         gl.clearColor(0, 0, 0, 1)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
+        gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.ALWAYS)
         var i = children.length
         var tObject, tProgram, tVBO, tIBO
         while (i--) {
@@ -160,19 +177,51 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
             gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-//            tObject.rotation[0] += 0.01
-//            tObject.rotation[1] += 0.01
+
             tObject.rotation[2] += 0.01
 
-            gl.uniform3fv(tProgram.uRotation, tObject.rotation)
-            gl.uniform3fv(tProgram.uPosition, tObject.position)
+            gl.uniform3fv(tProgram['uRotation[0]'], tObject.rotation)
+            gl.uniform3fv(tProgram['uPosition[0]'], tObject.position)
             gl.uniform3fv(tProgram.uScale, tObject.scale)
+            gl.uniform1i(tProgram.uLevel, 0)
 
             gl.bindTexture(gl.TEXTURE_2D, tObject.material);
             gl.uniform1i(tProgram.uSampler, 0);
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
             gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
+
+            var j = tObject.children.length
+            var tObject2
+            while (j--) {
+                tObject2 = tObject.children[j]
+                tProgram = tObject2.program
+                tVBO = tObject2.vbo
+                tIBO = tObject2.ibo
+
+                gl.useProgram(tProgram)
+                gl.uniformMatrix4fv(bitmapProgram.uPixelMatrix, false, uPixelMatrix)
+                gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
+                gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
+                gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+
+                tObject2.rotation[2] += 0.01
+
+                gl.uniform3fv(tProgram['uRotation[1]'], tObject2.rotation)
+                gl.uniform3fv(tProgram['uPosition[1]'], tObject2.position)
+                gl.uniform3fv(tProgram.uScale, tObject2.scale)
+                gl.uniform1i(tProgram.uLevel, 1)
+
+                gl.bindTexture(gl.TEXTURE_2D, tObject2.material);
+                gl.uniform1i(tProgram.uSampler, 0);
+
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
+                gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
+
+            }
         }
     }
 
@@ -185,7 +234,8 @@
             position: new Float32Array([0, 0, 0]),
             rotation: new Float32Array([0, 0, 0]),
             scale: new Float32Array([256, 256, 1]),
-            material: firstTexture
+            material: firstTexture,
+            children: []
         }
         return result
     }
@@ -193,6 +243,14 @@
     // host Code
     var item = new Mesh()
     children.push(item)
+    for(var  i = 0; i<5; i++){
+        var item2 = new Mesh()
+        item2.scale = [256,256,1]
+        item2.position[0] = Math.random()*512 - 256
+        item2.position[1] = Math.random()*512 - 256
+        item.children.push(item2)
+    }
+
 
     var uPixelMatrix = [
         2 / 1280, 0, 0, 0,
