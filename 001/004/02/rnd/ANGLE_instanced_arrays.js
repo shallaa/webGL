@@ -78,7 +78,7 @@ function initBuffers() {
             instanceColors[pos * offsetColor + 3] = 1.0;
         }else if(i==1){
             instanceColors[pos * offsetColor] = 1
-            instanceColors[pos * offsetColor + 1] = 0.5
+            instanceColors[pos * offsetColor + 1] = 1
             instanceColors[pos * offsetColor + 2] = 1
             instanceColors[pos * offsetColor + 3] = 1.0;
         }else{
