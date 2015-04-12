@@ -68,7 +68,7 @@ function initBuffers() {
     for (var i = 0; i < max; i++) {
         instancePositions[pos * offsetPosition] = 0;
         instancePositions[pos * offsetPosition + 1] = 0
-        instancePositions[i * offsetPosition + 2] = 2500-500*i
+        instancePositions[i * offsetPosition + 2] = 2500-50*i
         if(i==0){
             instanceColors[pos * offsetColor] = 1
             instanceColors[pos * offsetColor + 1] = 1
@@ -83,7 +83,7 @@ function initBuffers() {
             instanceColors[pos * offsetColor] = 1
             instanceColors[pos * offsetColor + 1] = 1
             instanceColors[pos * offsetColor + 2] = 1
-            instanceColors[pos * offsetColor + 3] = 0.5;
+            instanceColors[pos * offsetColor + 3] = 0.05;
         }
 
         pos++;
@@ -147,7 +147,7 @@ function render() {
         0, 0, (zNear * zFar) / (zNear - zFar), 1
     ]
 
-    gl.uniform3fv(p.uScale, [64, 64, 1])
+    gl.uniform3fv(p.uScale, [128, 128, 1])
     gl.uniformMatrix4fv(p.pixelMatrix, false, mtx)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
