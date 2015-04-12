@@ -9,8 +9,10 @@ function initWebGL() {
     c = document.getElementById("c");
     gl = c.getContext("experimental-webgl");
     ext = gl.getExtension("OES_element_index_uint");
+    if(!ext) alert('no! OES_element_index_uint')
     console.log(ext)
     ext = gl.getExtension('ANGLE_instanced_arrays');
+    if(!ext) alert('no! ANGLE_instanced_arrays')
 }
 var p;
 function initShaders() {
