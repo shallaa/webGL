@@ -2,7 +2,7 @@ var c, gl;
 
 var color = [];
 var indices = [];
-var max = 3
+var max = 100
 var ext;
 
 function initWebGL() {
@@ -83,7 +83,7 @@ function initBuffers() {
             instanceColors[pos * offsetColor] = 1
             instanceColors[pos * offsetColor + 1] = 1
             instanceColors[pos * offsetColor + 2] = 1
-            instanceColors[pos * offsetColor + 3] = 1.0;
+            instanceColors[pos * offsetColor + 3] = 0.5;
         }
 
         pos++;
@@ -119,7 +119,7 @@ function render() {
     gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.viewport(0, 0, 800, 800)
-
+    gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 
     time += 0.005
@@ -147,7 +147,7 @@ function render() {
         0, 0, (zNear * zFar) / (zNear - zFar), 1
     ]
 
-    gl.uniform3fv(p.uScale, [128, 128, 1])
+    gl.uniform3fv(p.uScale, [64, 64, 1])
     gl.uniformMatrix4fv(p.pixelMatrix, false, mtx)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
