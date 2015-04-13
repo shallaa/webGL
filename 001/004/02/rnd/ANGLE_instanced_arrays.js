@@ -13,6 +13,7 @@ function initWebGL() {
     console.log(ext)
     ext = gl.getExtension('ANGLE_instanced_arrays');
     if (!ext) alert('no! ANGLE_instanced_arrays')
+    gl.viewport(0, 0, 1280, 800)
 }
 var p;
 function initShaders() {
@@ -112,7 +113,7 @@ function initBuffers() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
 }
-
+//
 function animate() {
     render();
     requestAnimationFrame(animate);
@@ -123,21 +124,21 @@ var time = 0
 function render() {
     gl.clearColor(1, 0.5, 0.5, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    gl.viewport(0, 0, 1280, 800)
-    gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+    //gl.enable(gl.BLEND), gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
 
-    time += 0.005
+    time += 0.003
     for (var i = 0; i < max; i++) {
-        instancePositions[i * offsetPosition] = i + time;
-        instancePositions[i * offsetPosition + 1] = i * time / 10
+        instancePositions[i * offsetPosition] =  i;
+        instancePositions[i * offsetPosition + 1] = i * time *0.1
     }
 
     var mtx
     var fieldOfViewY = 45 * Math.PI / 180
     var aspectRatio = 1280 / 800
     var zNear = 1
-    var zFar = 1000000
+    var zFar = 10000000
     var yScale = 1.0 / Math.tan(fieldOfViewY / 2.0);
     var xScale = yScale / aspectRatio;
     mtx = [
@@ -147,17 +148,15 @@ function render() {
         0, 0, (zNear * zFar) / (zNear - zFar), 1
     ]
 
-    gl.uniform3fv(p.uScale, [32, 32, 1])
+    gl.uniform3fv(p.uScale, [64, 64, 1])
     gl.uniformMatrix4fv(p.pixelMatrix, false, mtx)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
-
-
     ext.drawElementsInstancedANGLE(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0, max);
-
+    //gl.flush();
 }
 
 initWebGL();
