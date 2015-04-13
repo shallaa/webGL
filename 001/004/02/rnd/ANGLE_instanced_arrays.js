@@ -2,17 +2,17 @@ var c, gl;
 
 var color = [];
 var indices = [];
-var max = 100
+var max = 30
 var ext;
 
 function initWebGL() {
     c = document.getElementById("c");
     gl = c.getContext("experimental-webgl");
     ext = gl.getExtension("OES_element_index_uint");
-    if(!ext) alert('no! OES_element_index_uint')
+    if (!ext) alert('no! OES_element_index_uint')
     console.log(ext)
     ext = gl.getExtension('ANGLE_instanced_arrays');
-    if(!ext) alert('no! ANGLE_instanced_arrays')
+    if (!ext) alert('no! ANGLE_instanced_arrays')
 }
 var p;
 function initShaders() {
@@ -64,28 +64,28 @@ function initBuffers() {
     ];
 
 
-
     var pos = 0;
 
     for (var i = 0; i < max; i++) {
         instancePositions[pos * offsetPosition] = 0;
         instancePositions[pos * offsetPosition + 1] = 0
-        instancePositions[i * offsetPosition + 2] = 2500-50*i
-        if(i==0){
-            instanceColors[pos * offsetColor] = 1
-            instanceColors[pos * offsetColor + 1] = 1
+        instancePositions[i * offsetPosition + 2] = 2500 - 350 * i
+        if (i == 0) {
+            instanceColors[pos * offsetColor] = 0
+            instanceColors[pos * offsetColor + 1] = 0
+            instanceColors[pos * offsetColor + 2] = 0
+            instanceColors[pos * offsetColor + 3] = 1.0;
+        } else if (i == 1) {
+            instanceColors[pos * offsetColor] = 0
+            instanceColors[pos * offsetColor + 1] = 0
             instanceColors[pos * offsetColor + 2] = 0.5
             instanceColors[pos * offsetColor + 3] = 1.0;
-        }else if(i==1){
-            instanceColors[pos * offsetColor] = 1
-            instanceColors[pos * offsetColor + 1] = 1
-            instanceColors[pos * offsetColor + 2] = 1
-            instanceColors[pos * offsetColor + 3] = 1.0;
-        }else{
-            instanceColors[pos * offsetColor] = 1
-            instanceColors[pos * offsetColor + 1] = 1
-            instanceColors[pos * offsetColor + 2] = 1
-            instanceColors[pos * offsetColor + 3] = 0.05;
+        } else {
+            instanceColors[pos * offsetColor] = 0
+            instanceColors[pos * offsetColor + 1] = 0
+            // 2D일경우에는 그냥..곱해버릴까 -_-;;
+            instanceColors[pos * offsetColor + 2] = 0.5
+            instanceColors[pos * offsetColor + 3] = 0.3;
         }
 
         pos++;
@@ -118,7 +118,7 @@ function animate() {
 var pos = 0;
 var time = 0
 function render() {
-    gl.clearColor(0, 0, 0, 1)
+    gl.clearColor(1, 0.5, 0.5, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.viewport(0, 0, 800, 800)
     gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -126,23 +126,18 @@ function render() {
 
     time += 0.005
     for (var i = 0; i < max; i++) {
-
-        //instancePositions[i * offsetPosition] = time;
-        //instancePositions[i * offsetPosition + 1] =
-        //instancePositions[i * offsetPosition + 2] = 0
-        instancePositions[i * offsetPosition] =  time;
-        instancePositions[i * offsetPosition + 1] = i*time/10
-
+        instancePositions[i * offsetPosition] = time;
+        instancePositions[i * offsetPosition + 1] = i * time / 10
     }
 
     var mtx
     var fieldOfViewY = 45 * Math.PI / 180
-    var aspectRatio = 800/800
+    var aspectRatio = 800 / 800
     var zNear = 1
     var zFar = 1000000
     var yScale = 1.0 / Math.tan(fieldOfViewY / 2.0);
     var xScale = yScale / aspectRatio;
-    mtx= [
+    mtx = [
         xScale, 0, 0, 0,
         0, -yScale, 0, 0,
         0, 0, zFar / (zFar - zNear), 1,
