@@ -2,7 +2,7 @@ var c, gl;
 
 var color = [];
 var indices = [];
-var max = 30
+var max = 100000
 var ext;
 
 function initWebGL() {
@@ -32,6 +32,8 @@ function initShaders() {
     p.aVertexPosition = gl.getAttribLocation(p, "aVertexPosition");
 
     p.instancePosition = gl.getAttribLocation(p, "instancePosition");
+    p.instanceRotation = gl.getAttribLocation(p, "instanceRotation");
+
     p.color = gl.getAttribLocation(p, "color");
 
     p.pixelMatrix = gl.getUniformLocation(p, 'pixelMatrix');
@@ -41,11 +43,13 @@ function initShaders() {
 
 
     gl.enableVertexAttribArray(p.instancePosition);
+    gl.enableVertexAttribArray(p.instanceRotation);
     gl.enableVertexAttribArray(p.color);
 
 
 }
 var instancePositions = [];
+var instanceRotations = [];
 var instanceColors = [];
 var offsetPosition = 3;
 var offsetColor = 4
@@ -69,24 +73,18 @@ function initBuffers() {
     for (var i = 0; i < max; i++) {
         instancePositions[pos * offsetPosition] = 0;
         instancePositions[pos * offsetPosition + 1] = 0
-        instancePositions[i * offsetPosition + 2] = 2500 - 350 * i
-        if (i == 0) {
-            instanceColors[pos * offsetColor] = 0
-            instanceColors[pos * offsetColor + 1] = 0
-            instanceColors[pos * offsetColor + 2] = 0
-            instanceColors[pos * offsetColor + 3] = 1.0;
-        } else if (i == 1) {
-            instanceColors[pos * offsetColor] = 0
-            instanceColors[pos * offsetColor + 1] = 0
-            instanceColors[pos * offsetColor + 2] = 0.5
-            instanceColors[pos * offsetColor + 3] = 1.0;
-        } else {
-            instanceColors[pos * offsetColor] = 0
-            instanceColors[pos * offsetColor + 1] = 0
-            // 2D일경우에는 그냥..곱해버릴까 -_-;;
-            instanceColors[pos * offsetColor + 2] = 0.5
-            instanceColors[pos * offsetColor + 3] = 0.3;
-        }
+        instancePositions[pos * offsetPosition + 2] = Math.random() * 10000 + 2500
+
+
+        instanceRotations[pos * offsetPosition] = Math.random()
+        instanceRotations[pos * offsetPosition+ 1] = Math.random()
+        instanceRotations[pos * offsetPosition+ 2] = Math.random()
+
+        instanceColors[pos * offsetColor] = Math.random()
+        instanceColors[pos * offsetColor + 1] = Math.random()
+        // 2D일경우에는 그냥..곱해버릴까 -_-;;
+        instanceColors[pos * offsetColor + 2] = Math.random()
+        instanceColors[pos * offsetColor + 3] = 0.3;
 
         pos++;
     }
@@ -100,6 +98,11 @@ function initBuffers() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceRotations), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 0, 0);
+    ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceColors), gl.STATIC_DRAW);
@@ -126,7 +129,7 @@ function render() {
 
     time += 0.005
     for (var i = 0; i < max; i++) {
-        instancePositions[i * offsetPosition] = time;
+        instancePositions[i * offsetPosition] = i + time;
         instancePositions[i * offsetPosition + 1] = i * time / 10
     }
 
@@ -144,7 +147,7 @@ function render() {
         0, 0, (zNear * zFar) / (zNear - zFar), 1
     ]
 
-    gl.uniform3fv(p.uScale, [128, 128, 1])
+    gl.uniform3fv(p.uScale, [32, 32, 1])
     gl.uniformMatrix4fv(p.pixelMatrix, false, mtx)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());

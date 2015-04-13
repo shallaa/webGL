@@ -18,6 +18,7 @@
 <script id="vs" type="x-shader/x-vertex">
 attribute vec3 aVertexPosition;
 attribute vec3 instancePosition;
+attribute vec3 instanceRotation;
 attribute vec4 color;
 uniform vec3 uScale;
 varying   vec4 vColor;
@@ -38,8 +39,8 @@ uniform mat4 pixelMatrix;
 void main()
 {
     vColor = color;
-mat4 test = mat4( 1,0,0,0, 0,1,0,0, 0,0,1,0, sin(instancePosition.x+instancePosition.y/20000.0)*100.0 , cos(instancePosition.x+instancePosition.y/10000.0)*100.0, instancePosition.z ,1.0);
-    gl_Position =  pixelMatrix*test*rotationMTX(vec3(0,0,color.z))*scaleMTX(uScale)*vec4(aVertexPosition , 1.0);
+mat4 test = mat4( 1,0,0,0, 0,1,0,0, 0,0,1,0, sin(instancePosition.x+instancePosition.y/1000.0)*1000.0 , cos(instancePosition.x+instancePosition.y/2000.0)*1000.0, instancePosition.z ,1.0);
+    gl_Position =  pixelMatrix*test*rotationMTX(instanceRotation)*scaleMTX(uScale)*vec4(aVertexPosition , 1.0);
 
 }
 
