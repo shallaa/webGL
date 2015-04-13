@@ -54,6 +54,8 @@ var instanceRotations = [];
 var instanceColors = [];
 var offsetPosition = 3;
 var offsetColor = 4
+
+var positionBuffer
 function initBuffers() {
 
     var data = [
@@ -95,7 +97,8 @@ function initBuffers() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    positionBuffer =  gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
@@ -122,7 +125,7 @@ function animate() {
 var pos = 0;
 var time = 0
 function render() {
-    gl.clearColor(1, 0.5, 0.5, 1)
+    gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -135,7 +138,7 @@ function render() {
     }
 
     var mtx
-    var fieldOfViewY = 45 * Math.PI / 180
+    var fieldOfViewY = 55 * Math.PI / 180
     var aspectRatio = 1280 / 800
     var zNear = 1
     var zFar = 10000000
@@ -148,13 +151,14 @@ function render() {
         0, 0, (zNear * zFar) / (zNear - zFar), 1
     ]
 
-    gl.uniform3fv(p.uScale, [32, 32, 1])
+    gl.uniform3fv(p.uScale, [100, 100, 1])
     gl.uniformMatrix4fv(p.pixelMatrix, false, mtx)
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
+
     ext.drawElementsInstancedANGLE(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0, max);
     //gl.flush();
 }
