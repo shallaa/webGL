@@ -125,16 +125,18 @@ function animate() {
 var pos = 0;
 var time = 0
 function render() {
-    gl.clearColor(0, 0, 0, 1)
+    //gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
     gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 
     time += 0.003
+    var a
     for (var i = 0; i < max; i++) {
-        instancePositions[i * offsetPosition] =  i;
-        instancePositions[i * offsetPosition + 1] = i * time *0.1
+        a = i * offsetPosition
+        instancePositions[a] =  i;
+        instancePositions[a + 1] = i * time *0.1
     }
 
     var mtx
@@ -160,7 +162,7 @@ function render() {
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
 
     ext.drawElementsInstancedANGLE(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0, max);
-    //gl.flush();
+    gl.flush();
 }
 
 initWebGL();
