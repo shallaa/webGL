@@ -127,7 +127,7 @@ var time = 0
 function render() {
     gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
+    gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
     gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 
@@ -138,7 +138,7 @@ function render() {
     }
 
     var mtx
-    var fieldOfViewY = 55 * Math.PI / 180
+    var fieldOfViewY = 45 * Math.PI / 180
     var aspectRatio = 1280 / 800
     var zNear = 1
     var zFar = 10000000
