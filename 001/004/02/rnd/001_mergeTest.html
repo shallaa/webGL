@@ -157,7 +157,7 @@
         for(var i=0; i<list.length; i++){
             draw(mergeMesh(list[i]))
         }
-        gap+=0.01
+        gap+=0.05
     }
 
 
@@ -172,7 +172,7 @@
             collect($list,item.children,$level+1)
         }
     }
-    var gap = 0.01
+    var gap = 0.1
     function draw(tObject){
         var i = tObject.length
         var  tProgram, tVBO, tIBO
@@ -223,41 +223,43 @@
 
         for (i = 0; i < len; i++) {
             item = $list[i]
-            tempVBO.push(rectData[0], rectData[1], rectData[2])
-            tempVBO.push(rectData[3], rectData[4], rectData[5])
-            tempVBO.push(rectData[6], rectData[7], rectData[8])
-            tempVBO.push(rectData[9], rectData[10], rectData[11])
+            tempVBO.push(
+                    rectData[0], rectData[1], rectData[2],
+                    rectData[3], rectData[4], rectData[5],
+                    rectData[6], rectData[7], rectData[8],
+                    rectData[9], rectData[10], rectData[11]
+            )
 
             tempIBO.push(i * 4 + 0, i * 4 + 1, i * 4 + 2, i * 4 + 1, i * 4 + 2, i * 4 + 3)
-
+            var t =     item.position
             tempPositionBO.push(
-                    item.position[0], item.position[1], 0,
-                    item.position[0], item.position[1], 0,
-                    item.position[0], item.position[1], 0,
-                    item.position[0], item.position[1], 0
+                    t[0], t[1], 0,
+                    t[0], t[1], 0,
+                    t[0], t[1], 0,
+                    t[0], t[1], 0
             )
 
-
+            t=item.rotation
             tempRotaionBO.push(
-                    item.rotation[0], item.rotation[1], item.rotation[2],
-                    item.rotation[0], item.rotation[1], item.rotation[2],
-                    item.rotation[0], item.rotation[1], item.rotation[2],
-                    item.rotation[0], item.rotation[1], item.rotation[2]
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2]
             )
 
-
+            t=item.scale
             tempScaleBO.push(
-                    item.scale[0], item.scale[1], item.scale[2],
-                    item.scale[0], item.scale[1], item.scale[2],
-                    item.scale[0], item.scale[1], item.scale[2],
-                    item.scale[0], item.scale[1], item.scale[2]
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2]
             )
-
+            t = item.material
             tempColorBo.push(
-                    item.material[0], item.material[1], item.material[2],
-                    item.material[0], item.material[1], item.material[2],
-                    item.material[0], item.material[1], item.material[2],
-                    item.material[0], item.material[1], item.material[2]
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2],
+                    t[0], t[1], t[2]
             )
 
         }
