@@ -96,23 +96,23 @@ function initBuffers() {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(p.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(p.aVertexPosition, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
 
     positionBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
 
     rotationBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceRotations), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
     ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceColors), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(p.color, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(p.color, 4, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
     ext.vertexAttribDivisorANGLE(p.color, 1)
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
@@ -130,7 +130,7 @@ function render() {
     //gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
-    //gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 
     time += 0.005
@@ -164,12 +164,12 @@ function render() {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.DYNAMIC_DRAW);
-    gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceRotations), gl.DYNAMIC_DRAW);
-    gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT,0);
     ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
 
     ext.drawElementsInstancedANGLE(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0, max);
