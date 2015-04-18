@@ -173,7 +173,7 @@ function render() {
     ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
 
     ext.drawElementsInstancedANGLE(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0, max);
-    gl.flush();
+    //gl.flush();
 }
 
 initWebGL();

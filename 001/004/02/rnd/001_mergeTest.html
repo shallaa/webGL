@@ -18,6 +18,21 @@
     if (gl) console.log('webgl 초기화 성공!')
     else console.log('webgl 초기화 실패!')
 
+    var uPixelMatrix = [
+        2 / 1280, 0, 0, 0,
+        0, 2 / 600, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 1
+    ]
+
+
+    if (cvs) {
+        cvs.width = '1280', cvs.height = '600'
+        cvs.style.width = 1280 + 'px'
+        cvs.style.height = 600 + 'px'
+    }
+    gl.viewport(0, 0, parseInt(cvs.width), +parseInt(cvs.height));
+
     // Vertex Buffer
     var rectData = [
         -0.5, -0.5, 0.0,
@@ -153,12 +168,42 @@
         gl.enableVertexAttribArray(colorProgram.aScale);
         gl.enableVertexAttribArray(colorProgram.aColor);
         
-//        if((aaaa++)%100==0) console.log(list)
-        for(var i=0; i<list.length; i++){
-            draw(mergeMesh(list[i]))
+        var i = list.length
+        while(i--){
+            var tObject = mergeMesh(list[i])
+            var  tProgram, tVBO, tIBO
+            tProgram = tObject.program
+            tIBO = tObject.ibo
+            gl.useProgram(tProgram)
+            gl.uniformMatrix4fv(tProgram.uPixelMatrix, false, uPixelMatrix)
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.rotationBo)
+            var temp = tObject.rotationBo.data
+
+            for (var k = 0, len = temp.length / 12; k < len; k++) {
+                var start = k * 12
+                temp[start] += gap, temp[start + 1] += gap, temp[start + 2] += gap
+                temp[start + 3] += gap, temp[start + 4] += gap, temp[start + 5] += gap
+                temp[start + 6] += gap, temp[start + 7] += gap, temp[start + 8] += gap
+                temp[start + 9] += gap, temp[start + 10] += gap, temp[start + 11] += gap
+            }
+
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(temp), gl.DYNAMIC_DRAW)
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.vbo);
+            gl.vertexAttribPointer(tProgram.aVertexPosition, tObject.vbo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.rotationBo);
+            gl.vertexAttribPointer(tProgram.aRotation, tObject.rotationBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.positionBo);
+            gl.vertexAttribPointer(tProgram.aPosition, tObject.positionBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.scaleBo);
+            gl.vertexAttribPointer(tProgram.aScale, tObject.scaleBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, tObject.colorBo);
+            gl.vertexAttribPointer(tProgram.aColor, tObject.colorBo.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
+            gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
         }
         gl.flush()
-        gap+=0.05
+        gap+=0.03
     }
 
 
@@ -166,7 +211,6 @@
         var t = $list[$level]
         var i = $children.length
         var item
-
         while (i--) {
             item = $children[i]
             t.push(item)
@@ -175,36 +219,7 @@
     }
     var gap = 0.1
     function draw(tObject){
-        var i = tObject.length
-        var  tProgram, tVBO, tIBO
-        tProgram = tObject.program
-        tIBO = tObject.ibo
 
-        gl.uniformMatrix4fv(tProgram.uPixelMatrix, false, uPixelMatrix)
-        gl.bindBuffer(gl.ARRAY_BUFFER, tObject.rotationBo)
-        var temp = tObject.rotationBo.data
-
-        for (var k = 0, len = temp.length / 12; k < len; k++) {
-            var start = k * 12
-            temp[start] += gap, temp[start + 1] += gap, temp[start + 2] += gap
-            temp[start + 3] += gap, temp[start + 4] += gap, temp[start + 5] += gap
-            temp[start + 6] += gap, temp[start + 7] += gap, temp[start + 8] += gap
-            temp[start + 9] += gap, temp[start + 10] += gap, temp[start + 11] += gap
-        }
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(temp), gl.DYNAMIC_DRAW)
-        gl.useProgram(tProgram)
-        gl.bindBuffer(gl.ARRAY_BUFFER, tObject.vbo);
-        gl.vertexAttribPointer(tProgram.aVertexPosition, tObject.vbo.itemSize, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, tObject.rotationBo);
-        gl.vertexAttribPointer(tProgram.aRotation, tObject.rotationBo.itemSize, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, tObject.positionBo);
-        gl.vertexAttribPointer(tProgram.aPosition, tObject.positionBo.itemSize, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, tObject.scaleBo);
-        gl.vertexAttribPointer(tProgram.aScale, tObject.scaleBo.itemSize, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, tObject.colorBo);
-        gl.vertexAttribPointer(tProgram.aColor, tObject.colorBo.itemSize, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
-        gl.drawElements(gl.TRIANGLES, tIBO.numItem, gl.UNSIGNED_SHORT, 0);
     }
 
     var vboBuffer = gl.createBuffer()
@@ -214,6 +229,7 @@
     var scaleBuffer = gl.createBuffer()
     var colorBuffer = gl.createBuffer()
 
+    var merged = 0
     function mergeMesh($list) {
         var item, i, len = $list.length
         var tempVBO = [], tempIBO = []
@@ -224,6 +240,7 @@
 
         for (i = 0; i < len; i++) {
             item = $list[i]
+
             tempVBO.push(
                     rectData[0], rectData[1], rectData[2],
                     rectData[3], rectData[4], rectData[5],
@@ -342,30 +359,18 @@
     item.scale= [150,150,150]
 
     children.push(item)
-    for(var i =0; i<3000; i++){
+    for(var i =0; i<1000; i++){
         var item2 = new Mesh()
         item2.position[0] = Math.random()*1000-500
         item2.position[1] = Math.random()*1000-500
-        item2.scale= [50,50,50]
+        var a = Math.random()*50
+
+        item2.scale= [a,a,1]
         item.children.push(item2)
     }
 
 
-    var uPixelMatrix = [
-        2 / 1280, 0, 0, 0,
-        0, -2 / 600, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 1
-    ]
-
-
-    if (cvs) {
-        cvs.width = '1280', cvs.height = '600'
-        cvs.style.width = 1280 + 'px'
-        cvs.style.height = 600 + 'px'
-    }
-    gl.viewport(0, 0, parseInt(cvs.width), +parseInt(cvs.height));
-    setInterval(render, 15)
+    setInterval(render, 16)
 </script>
 <div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
 <div><a href="https://www.facebook.com/groups/bs5js/" target="_blank">facebook Group</a></div>
