@@ -39,19 +39,10 @@ uniform mat4 pixelMatrix;
 void main()
 {
     vColor = color;
-mat4 test = mat4( 1,0,0,0, 0,1,0,0, 0,0,1,0, sin(instancePosition.y/1000.0)*1000.0 , cos(instancePosition.x/2000.0+instancePosition.y/2000.0)*500.0, instancePosition.z+cos(instancePosition.y/1000.0)*1000.0 ,1.0);
-    gl_Position =  pixelMatrix*test*rotationMTX(instanceRotation)*scaleMTX(uScale)*vec4(aVertexPosition , 1.0);
+    mat4 test = mat4( 1,0,0,0, 0,1,0,0, 0,0,1,0, sin(instancePosition.x+instancePosition.y/2000.0)*1000.0 , cos(instancePosition.x+instancePosition.y/1000.0)*1000.0, instancePosition.z ,1.0);
+    gl_Position =  pixelMatrix*test*rotationMTX(instanceRotation)*scaleMTX(uScale)*vec4(aVertexPosition.xyz , 1.0);
 
 }
-
-
-
-
-
-
-
-
-
 </script>
 
 <script id="fs" type="x-shader/x-fragment">

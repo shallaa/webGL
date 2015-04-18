@@ -53,9 +53,11 @@ var instancePositions = [];
 var instanceRotations = [];
 var instanceColors = [];
 var offsetPosition = 3;
+var offsetRotation = 3;
 var offsetColor = 4
 
 var positionBuffer
+var rotationBuffer
 function initBuffers() {
 
     var data = [
@@ -74,18 +76,17 @@ function initBuffers() {
     var pos = 0;
 
     for (var i = 0; i < max; i++) {
-        instancePositions[pos * offsetPosition] = 0;
-        instancePositions[pos * offsetPosition + 1] = 0
-        instancePositions[pos * offsetPosition + 2] = Math.random() * 10000 + 2500
 
+        instancePositions[pos * offsetPosition] = Math.random() * 50000 - 25000;
+        instancePositions[pos * offsetPosition + 1] = Math.random() * 50000 - 20500
+        instancePositions[pos * offsetPosition + 2] = Math.random() * 50000
 
-        instanceRotations[pos * offsetPosition] = Math.random()
-        instanceRotations[pos * offsetPosition+ 1] = Math.random()
-        instanceRotations[pos * offsetPosition+ 2] = Math.random()
+        instanceRotations[pos * offsetRotation] = Math.random()
+        instanceRotations[pos * offsetRotation + 1] = Math.random()
+        instanceRotations[pos * offsetRotation + 2] = Math.random()
 
         instanceColors[pos * offsetColor] = Math.random()
         instanceColors[pos * offsetColor + 1] = Math.random()
-        // 2D일경우에는 그냥..곱해버릴까 -_-;;
         instanceColors[pos * offsetColor + 2] = Math.random()
         instanceColors[pos * offsetColor + 3] = 0.3;
 
@@ -97,13 +98,14 @@ function initBuffers() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
 
-    positionBuffer =  gl.createBuffer()
+    positionBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    rotationBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceRotations), gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 0, 0);
     ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
@@ -128,15 +130,19 @@ function render() {
     //gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
-    gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    //gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 
-    time += 0.003
+    time += 0.005
+
     var a
+
     for (var i = 0; i < max; i++) {
         a = i * offsetPosition
-        instancePositions[a] =  i;
-        instancePositions[a + 1] = i * time *0.1
+        instancePositions[a] = time
+        instancePositions[a + 1] = i * time * 0.1
+
+        instanceRotations[a+2] +=0.02
     }
 
     var mtx
@@ -153,13 +159,18 @@ function render() {
         0, 0, (zNear * zFar) / (zNear - zFar), 1
     ]
 
-    gl.uniform3fv(p.uScale, [100, 100, 1])
+    gl.uniform3fv(p.uScale, [64, 64, 1])
     gl.uniformMatrix4fv(p.pixelMatrix, false, mtx)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 0, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceRotations), gl.DYNAMIC_DRAW);
+    gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 0, 0);
+    ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
 
     ext.drawElementsInstancedANGLE(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0, max);
     gl.flush();
