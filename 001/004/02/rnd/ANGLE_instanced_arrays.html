@@ -14,7 +14,7 @@
 </style>
 
 <body>
-<canvas id="c" width="1280" height="800"></canvas>
+<canvas id="c" width="1900" height="800"></canvas>
 <script id="vs" type="x-shader/x-vertex">
 attribute vec3 aVertexPosition;
 attribute vec3 instancePosition;
@@ -23,12 +23,8 @@ attribute vec4 color;
 uniform vec3 uScale;
 varying   vec4 vColor;
 uniform mat4 pixelMatrix;
-       mat4 scaleMTX(vec3 t)
-            {
-               return mat4( t[0],0,0,0, 0,t[1],0,0, 0,0,t[2],0, 0,0,0,1);
-            }
-            
-                        mat4 rotationMTX(vec3 t)
+
+            mat4 rotationMTX(vec3 t)
             {
                float s = sin(t[0]);float c = cos(t[0]);
                mat4 m1 = mat4( 1,0,0,0, 0,c,-s,0, 0,s,c,0, 0,0,0,1);s = sin(t[1]);c = cos(t[1]);
@@ -40,7 +36,7 @@ void main()
 {
     vColor = color;
     mat4 test = mat4( 1,0,0,0, 0,1,0,0, 0,0,1,0, sin(instancePosition.x+instancePosition.y/2000.0)*1000.0 , cos(instancePosition.x+instancePosition.y/1000.0)*1000.0, instancePosition.z ,1.0);
-    gl_Position =  pixelMatrix*test*rotationMTX(instanceRotation)*scaleMTX(uScale)*vec4(aVertexPosition.xyz , 1.0);
+    gl_Position =  pixelMatrix*test*rotationMTX(instanceRotation)*mat4( uScale[0],0,0,0, 0,uScale[1],0,0, 0,0,uScale[2],0, 0,0,0,1)*vec4(aVertexPosition.xyz , 1.0);
 
 }
 </script>

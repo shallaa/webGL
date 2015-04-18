@@ -2,7 +2,7 @@ var c, gl;
 
 var color = [];
 var indices = [];
-var max = 100000
+var max =100000
 var ext;
 
 function initWebGL() {
@@ -13,7 +13,7 @@ function initWebGL() {
     console.log(ext)
     ext = gl.getExtension('ANGLE_instanced_arrays');
     if (!ext) alert('no! ANGLE_instanced_arrays')
-    gl.viewport(0, 0, 1280, 800)
+    gl.viewport(0, 0, 1900, 800)
 }
 var p;
 function initShaders() {
@@ -49,8 +49,8 @@ function initShaders() {
 
 
 }
-var instancePositions = [];
-var instanceRotations = [];
+var instancePositions = new Float32Array(3000000);
+var instanceRotations = new Float32Array(3000000);
 var instanceColors = [];
 var offsetPosition = 3;
 var offsetRotation = 3;
@@ -100,13 +100,13 @@ function initBuffers() {
 
     positionBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, instancePositions, gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
 
     rotationBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceRotations), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, instanceRotations, gl.STATIC_DRAW);
     gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
     ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
 
@@ -130,45 +130,47 @@ function render() {
     //gl.clearColor(0, 0, 0, 1)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
-    gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    //gl.enable(gl.BLEND), gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 
     time += 0.005
 
     var a
-
-    for (var i = 0; i < max; i++) {
+    var i = max
+    while(i--){
         a = i * offsetPosition
         instancePositions[a] = time
         instancePositions[a + 1] = i * time * 0.1
 
-        instanceRotations[a+2] +=0.02
+        instanceRotations[a] +=0.05
+        instanceRotations[a+1] +=0.05
+        instanceRotations[a+2] +=0.05
     }
 
     var mtx
     var fieldOfViewY = 45 * Math.PI / 180
-    var aspectRatio = 1280 / 800
+    var aspectRatio = 1900 / 800
     var zNear = 1
-    var zFar = 10000000
+    var zFar = 100000
     var yScale = 1.0 / Math.tan(fieldOfViewY / 2.0);
     var xScale = yScale / aspectRatio;
     mtx = [
         xScale, 0, 0, 0,
-        0, -yScale, 0, 0,
+        0, yScale, 0, 0,
         0, 0, zFar / (zFar - zNear), 1,
         0, 0, (zNear * zFar) / (zNear - zFar), 1
     ]
 
-    gl.uniform3fv(p.uScale, [64, 64, 1])
+    gl.uniform3fv(p.uScale, [32, 32, 1])
     gl.uniformMatrix4fv(p.pixelMatrix, false, mtx)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instancePositions), gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, instancePositions, gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(p.instancePosition, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
     ext.vertexAttribDivisorANGLE(p.instancePosition, 1)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(instanceRotations), gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, instanceRotations, gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(p.instanceRotation, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT,0);
     ext.vertexAttribDivisorANGLE(p.instanceRotation, 1)
 
