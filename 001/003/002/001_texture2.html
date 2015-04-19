@@ -11,6 +11,7 @@
 </head>
 <body>
 <canvas id="glCanvas"></canvas>
+<canvas id="texture" width="512" height="256" style="visibility: hidden"></canvas>
 <script>
     var gl, keys = 'webgl,experimental-webgl,webkit-3d,moz-webgl'.split(','), i = keys.length
     var cvs = document.getElementById('glCanvas')
@@ -20,10 +21,10 @@
 
     // Vertex Buffer
     var rectData = [
-        -0.5, -0.5, 0.0,
-        0.5, -0.5, 0.0,
-        -0.5, 0.5, 0.0,
-        0.5, 0.5, 0.0
+        -.5, -.5, 0.0,
+        -.5, .5, 0.0,
+        .5, -.5, 0.0,
+        .5, .5, 0.0
     ]
     var rectBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, rectBuffer)
@@ -33,7 +34,8 @@
     console.log(rectBuffer)
 
     var rectIndexData = [
-        0, 1, 2, 1, 2, 3
+        0, 1, 2,
+        1, 2, 3
     ]
     var rectIndexBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rectIndexBuffer)
@@ -42,12 +44,7 @@
     rectIndexBuffer.numItem = 6
     console.log(rectIndexBuffer)
 
-    var rectUVData = [
-        0.0, 0.0,
-        1.0, 0.0,
-        0.0, 1.0,
-        1.0, 1.0
-    ]
+    var rectUVData = [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]
     var rectUVBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rectUVData), gl.STATIC_DRAW)
@@ -55,17 +52,14 @@
     rectUVBuffer.numItem = 4
 
     var firstTexture = gl.createTexture() // 텍스쳐 생성
-    firstTexture.img = new Image()
-    firstTexture.img.src = 'test.png'
-    firstTexture.img.onload = function () {
-        gl.bindTexture(gl.TEXTURE_2D, firstTexture)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, firstTexture.img);
-        // 이미지보간
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.generateMipmap(gl.TEXTURE_2D)
-        gl.bindTexture(gl.TEXTURE_2D, null)
-    }
+    gl.bindTexture(gl.TEXTURE_2D, firstTexture)
+    var ctx = document.getElementById('texture').getContext('2d')
+    ctx.font = "48px serif";
+    ctx.fillText("Hello world", 10, 50);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('texture'));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.bindTexture(gl.TEXTURE_2D, null)
 
 
     // Vertex Shader
@@ -73,7 +67,6 @@
             "attribute vec3 aVertexPosition;" +
             "attribute vec2 aUV;" +
             "varying vec2 vUV;" +
-            "uniform mat4 uPixelMatrix;" +
             "uniform vec3 uRotation;" +
             "uniform vec3 uPosition;" +
             "uniform vec3 uScale;" +
@@ -97,7 +90,6 @@
             '}' +
             "void main(void) {" +
             " gl_Position = " +
-            "uPixelMatrix*" +
             "positionMTX(uPosition) * " +
             "rotationMTX(uRotation) * " +
             "scaleMTX(uScale) * " +
@@ -116,6 +108,7 @@
             "void main(void) {" +
             "gl_FragColor =  texture2D(uSampler, vec2(vUV.s, vUV.t));" +
             "}"
+
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
     gl.shaderSource(fragmentShader, fragmentShaderStr)
     gl.compileShader(fragmentShader)
@@ -137,14 +130,13 @@
     bitmapProgram.uPosition = gl.getUniformLocation(bitmapProgram, "uPosition");
     bitmapProgram.uScale = gl.getUniformLocation(bitmapProgram, "uScale");
     bitmapProgram.uSampler = gl.getUniformLocation(bitmapProgram, "uSampler");
-    bitmapProgram.uPixelMatrix = gl.getUniformLocation(bitmapProgram, "uPixelMatrix");
 
 
     var children = []
     function render() {
         gl.clearColor(0, 0, 0, 1)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        gl.enable(gl.DEPTH_TEST), gl.depthFunc(gl.LESS)
+
         var i = children.length
         var tObject, tProgram, tVBO, tIBO
         while (i--) {
@@ -154,15 +146,12 @@
             tIBO = tObject.ibo
 
             gl.useProgram(tProgram)
-            gl.uniformMatrix4fv(bitmapProgram.uPixelMatrix, false, uPixelMatrix)
             gl.bindBuffer(gl.ARRAY_BUFFER, tVBO);
             gl.vertexAttribPointer(tProgram.aVertexPosition, tVBO.itemSize, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, rectUVBuffer);
             gl.vertexAttribPointer(tProgram.aUV, rectUVBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-//            tObject.rotation[0] += 0.01
-//            tObject.rotation[1] += 0.01
             tObject.rotation[2] += 0.01
 
             gl.uniform3fv(tProgram.uRotation, tObject.rotation)
@@ -170,6 +159,7 @@
             gl.uniform3fv(tProgram.uScale, tObject.scale)
 
             gl.bindTexture(gl.TEXTURE_2D, tObject.material);
+            // 바인딩했으니 프레그먼트에 선언한 샘플러로 텍스쳐를 보낼 수있습니다.
             gl.uniform1i(tProgram.uSampler, 0);
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBO)
@@ -183,9 +173,9 @@
             program: bitmapProgram,
             vbo: rectBuffer,
             ibo: rectIndexBuffer,
-            position: new Float32Array([0, 0, 1000]),
+            position: new Float32Array([0, 0, 0]),
             rotation: new Float32Array([0, 0, 0]),
-            scale: new Float32Array([256, 256, 1]),
+            scale: new Float32Array([1, 1, 1]),
             material: firstTexture
         }
         return result
@@ -195,21 +185,10 @@
     var item = new Mesh()
     children.push(item)
 
-    var uPixelMatrix = [
-        2 / 1280, 0, 0, 0,
-        0, -2 / 600, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 1
-    ]
-
-
-    if (cvs) {
-        cvs.width = '1280', cvs.height = '600'
-        cvs.style.width = 1280 + 'px'
-        cvs.style.height = 600 + 'px'
-    }
-    gl.viewport(0, 0, parseInt(cvs.width), +parseInt(cvs.height));
-    setInterval(render, 15)
+    if (cvs)  cvs.width = '1280', cvs.height = '600'
+    console.log(parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight))
+    gl.viewport(0, 0, parseInt(cvs.clientWidth), +parseInt(cvs.clientHeight));
+    setInterval(render, 16)
 </script>
 <div><a href="http://www.bswebgl.com/" target="_blank">http://www.bswebgl.com/</a></div>
 <div><a href="https://www.facebook.com/groups/bs5js/" target="_blank">facebook Group</a></div>
