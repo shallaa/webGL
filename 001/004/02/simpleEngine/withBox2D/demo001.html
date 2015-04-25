@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>bsWebGL 소모임 1기 - Minimal 2D Engine!</title>
+    <script src="../step05/bsGL.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas2" style="position: absolute;"></canvas>
+<canvas id="canvas" style="position: absolute;"></canvas>
+<script>
+    bsGL.init('canvas2', function () {
+        var redMax = 150
+        for (var i = 0; i < redMax; i++) {
+            var test = bsGL.Mesh()
+            bsGL.children.push(test)
+            test.position[0] = Math.random() * 1920 - 960
+            test.position[1] = Math.random() * 1920 - 960
+            var s = Math.random() * 25+25
+            test.scale = [s, s, s]
+            if (i % 5 == 0) {
+                test.material = bsGL.Material('bitmap', '../step05/test.png')
+            }
+        }
+
+        //////////////////////////////
+        setBox2D()
+        function setBox2D() {
+            var body = document.body, html = document.documentElement;
+            var redW = 1920
+            var redH = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight)
+            init()
+            function init() {
+                var b2Vec2 = Box2D.Common.Math.b2Vec2
+                        , b2AABB = Box2D.Collision.b2AABB
+                        , b2BodyDef = Box2D.Dynamics.b2BodyDef
+                        , b2Body = Box2D.Dynamics.b2Body
+                        , b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+                        , b2Fixture = Box2D.Dynamics.b2Fixture
+                        , b2World = Box2D.Dynamics.b2World
+                        , b2MassData = Box2D.Collision.Shapes.b2MassData
+                        , b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+                        , b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+                        , b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+                        , b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef
+                        ;
+
+                var world = new b2World(
+                        new b2Vec2(0, 10)    //gravity
+                        , true                 //allow sleep
+                );
+
+                var fixDef = new b2FixtureDef;
+                fixDef.density = 1.0;
+                fixDef.friction = 0.5;
+                fixDef.restitution = 0.2;
+
+                var bodyDef = new b2BodyDef;
+
+                //create ground
+                bodyDef.type = b2Body.b2_staticBody;
+                fixDef.shape = new b2PolygonShape;
+                fixDef.shape.SetAsBox(redW / 30, 2);
+                bodyDef.position.Set(10, redH / 30 + 1.8);
+                world.CreateBody(bodyDef).CreateFixture(fixDef);
+                bodyDef.position.Set(10, -1.8);
+                world.CreateBody(bodyDef).CreateFixture(fixDef);
+                fixDef.shape.SetAsBox(2, redH / 30);
+                bodyDef.position.Set(-1.8, 13);
+                world.CreateBody(bodyDef).CreateFixture(fixDef);
+                bodyDef.position.Set(redW / 30 + 1.8, 13);
+                world.CreateBody(bodyDef).CreateFixture(fixDef);
+
+
+                //create some objects
+                bodyDef.type = b2Body.b2_dynamicBody;
+                for (var i = 0; i < redMax; ++i) {
+                    if (Math.random() > 0.5) {
+                        fixDef.shape = new b2PolygonShape;
+                        fixDef.shape.SetAsBox(
+                                bsGL.children[i].scale[0] / 60 //half width
+                                , bsGL.children[i].scale[1] / 60  //half height
+                        );
+                    } else {
+                        fixDef.shape = new b2CircleShape(
+                                bsGL.children[i].scale[0] / 60 //radius
+                        );
+                    }
+                    bodyDef.position.x = Math.random() * 60;
+                    bodyDef.position.y = Math.random() * 10;
+
+                    var a = world.CreateBody(bodyDef)
+                    a.userData = {
+                        bsGLObj: bsGL.children[i]
+                    }
+                    a.CreateFixture(fixDef);
+
+                }
+
+
+                //setup debug draw
+                var debugDraw = new b2DebugDraw();
+
+
+                document.getElementById("canvas").width = redW
+                document.getElementById("canvas").height = redH
+                debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+                debugDraw.SetDrawScale(30.0);
+                debugDraw.SetFillAlpha(0.5);
+                debugDraw.SetLineThickness(1.0);
+                debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+                world.SetDebugDraw(debugDraw);
+
+                bsGL.LOOPS['box2d'] = update
+
+                //mouse
+
+                var mouseX, mouseY, mousePVec, isMouseDown, selectedBody, mouseJoint;
+                var canvasPosition = getElementPosition(document.getElementById("canvas"));
+
+                document.addEventListener("mousedown", function (e) {
+                    isMouseDown = true;
+                    handleMouseMove(e);
+                    document.addEventListener("mousemove", handleMouseMove, true);
+                }, true);
+
+                document.addEventListener("mouseup", function () {
+                    document.removeEventListener("mousemove", handleMouseMove, true);
+                    isMouseDown = false;
+                    mouseX = undefined;
+                    mouseY = undefined;
+                }, true);
+
+                function handleMouseMove(e) {
+                    mouseX = (e.clientX - canvasPosition.x) / 30;
+                    mouseY = (e.clientY - canvasPosition.y) / 30;
+                };
+
+                function getBodyAtMouse() {
+                    mousePVec = new b2Vec2(mouseX, mouseY);
+                    var aabb = new b2AABB();
+                    aabb.lowerBound.Set(mouseX - 0.001, mouseY - 0.001);
+                    aabb.upperBound.Set(mouseX + 0.001, mouseY + 0.001);
+
+                    // Query the world for overlapping shapes.
+
+                    selectedBody = null;
+                    world.QueryAABB(getBodyCB, aabb);
+                    return selectedBody;
+                }
+
+                function getBodyCB(fixture) {
+                    if (fixture.GetBody().GetType() != b2Body.b2_staticBody) {
+                        if (fixture.GetShape().TestPoint(fixture.GetBody().GetTransform(), mousePVec)) {
+                            selectedBody = fixture.GetBody();
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                //update
+                var a = 0
+
+                function update() {
+
+                    if (isMouseDown && (!mouseJoint)) {
+                        var body = getBodyAtMouse();
+                        if (body) {
+                            var md = new b2MouseJointDef();
+                            md.bodyA = world.GetGroundBody();
+                            md.bodyB = body;
+                            md.target.Set(mouseX, mouseY);
+                            md.collideConnected = true;
+                            md.maxForce = 300.0 * body.GetMass();
+                            mouseJoint = world.CreateJoint(md);
+                            body.SetAwake(true);
+                        }
+                    }
+
+                    if (mouseJoint) {
+                        if (isMouseDown) {
+                            mouseJoint.SetTarget(new b2Vec2(mouseX, mouseY));
+                        } else {
+                            world.DestroyJoint(mouseJoint);
+                            mouseJoint = null;
+                        }
+                    }
+
+                    world.Step(1 / 60, 10, 10);
+//                    world.DrawDebugData();
+                    world.ClearForces();
+                    var node = world.GetBodyList();
+                    while (node) {
+                        var b = node;
+                        node = node.GetNext();
+                        var position = b.GetPosition();
+                        var rotation = b.GetAngle()
+
+                        if (b.GetType() == b2Body.b2_dynamicBody) {
+                            var t = b.userData.bsGLObj
+                            t.position = [position.x * 30, position.y * 30, 0]
+                            t.rotation = [0, 0, -rotation]
+                        }
+                    }
+                };
+
+                //helpers
+
+                //http://js-tut.aardon.de/js-tut/tutorial/position.html
+                function getElementPosition(element) {
+                    var elem = element, tagname = "", x = 0, y = 0;
+
+                    while ((typeof(elem) == "object") && (typeof(elem.tagName) != "undefined")) {
+                        y += elem.offsetTop;
+                        x += elem.offsetLeft;
+                        tagname = elem.tagName.toUpperCase();
+
+                        if (tagname == "BODY")
+                            elem = 0;
+
+                        if (typeof(elem) == "object") {
+                            if (typeof(elem.offsetParent) == "object")
+                                elem = elem.offsetParent;
+                        }
+                    }
+
+                    return {x: x, y: y};
+                }
+
+
+            }
+        }
+    }, '../step05/shader.js', '../step05/ex.js', 'Box2dWeb-2.1.a.3.min.js')
+
+</script>
+</body>
+</html>

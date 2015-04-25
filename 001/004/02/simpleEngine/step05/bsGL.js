@@ -56,11 +56,11 @@ var bsGL = (function () {
                 2 / w, 0, 0, 0,
                 0, -2 / h, 0, 0,
                 0, 0, 0, 0,
-                0, 0, 0, 1
+                -1, 1, 0, 1
             ]
             var cvs = API.cvs
             if (cvs)  cvs.width = w, cvs.height = h
-            console.log(w, h)
+            console.log('!!!!!!!!!!',w, h)
             gl.viewport(0, 0, w, +h);
         }
     }
