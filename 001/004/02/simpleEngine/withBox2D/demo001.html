@@ -33,7 +33,7 @@
         setBox2D()
         function setBox2D() {
             var body = document.body, html = document.documentElement;
-            var redW = 1920
+            var redW = html.clientWidth
             var redH = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight)
             init()
             function init() {
