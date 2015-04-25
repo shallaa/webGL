@@ -6,7 +6,7 @@ var bsGL = (function () {
     var W = window, DOC = document, HEAD = DOC.getElementsByTagName('head')[0];
     W.requestAnimFrame = (function () {
         return W.requestAnimationFrame || W.webkitRequestAnimationFrame || W.mozRequestAnimationFrame || function (loop) {
-                W.setTimeout(loop, 16)
+                W.setTimeout(loop, 15)
             }
     })()
     var gl

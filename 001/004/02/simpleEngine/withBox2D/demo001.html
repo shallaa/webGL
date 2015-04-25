@@ -13,18 +13,26 @@
 </head>
 <body>
 <canvas id="canvas2" style="position: absolute;"></canvas>
-<canvas id="canvas" style="position: absolute;"></canvas>
+<canvas id="box2d" style="position: absolute;"></canvas>
+<label style="position: absolute;">디버그<input type="checkbox" id="debug"></label>
 <script>
     bsGL.init('canvas2', function () {
-        var redMax = 150
+        var debugBox2D = 0
+        var debug = document.getElementById('debug')
+        debug.addEventListener('mousedown', function () {
+            debugBox2D = !debugBox2D
+            document.getElementById('box2d').style.display = debugBox2D ? 'block' : 'none'
+        })
+
+        var redMax = 50
         for (var i = 0; i < redMax; i++) {
             var test = bsGL.Mesh()
             bsGL.children.push(test)
             test.position[0] = Math.random() * 1920 - 960
             test.position[1] = Math.random() * 1920 - 960
-            var s = Math.random() * 25+25
+            var s = Math.random() * 100 + 25
             test.scale = [s, s, s]
-            if (i % 5 == 0) {
+            if (i % 3 == 0) {
                 test.material = bsGL.Material('bitmap', '../step05/test.png')
             }
         }
@@ -81,17 +89,11 @@
                 //create some objects
                 bodyDef.type = b2Body.b2_dynamicBody;
                 for (var i = 0; i < redMax; ++i) {
-                    if (Math.random() > 0.5) {
-                        fixDef.shape = new b2PolygonShape;
-                        fixDef.shape.SetAsBox(
-                                bsGL.children[i].scale[0] / 60 //half width
-                                , bsGL.children[i].scale[1] / 60  //half height
-                        );
-                    } else {
-                        fixDef.shape = new b2CircleShape(
-                                bsGL.children[i].scale[0] / 60 //radius
-                        );
-                    }
+                    fixDef.shape = new b2PolygonShape;
+                    fixDef.shape.SetAsBox(
+                            bsGL.children[i].scale[0] / 60 //half width
+                            , bsGL.children[i].scale[1] / 60  //half height
+                    );
                     bodyDef.position.x = Math.random() * 60;
                     bodyDef.position.y = Math.random() * 10;
 
@@ -108,9 +110,9 @@
                 var debugDraw = new b2DebugDraw();
 
 
-                document.getElementById("canvas").width = redW
-                document.getElementById("canvas").height = redH
-                debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+                document.getElementById('box2d').width = redW
+                document.getElementById('box2d').height = redH
+                debugDraw.SetSprite(document.getElementById('box2d').getContext("2d"));
                 debugDraw.SetDrawScale(30.0);
                 debugDraw.SetFillAlpha(0.5);
                 debugDraw.SetLineThickness(1.0);
@@ -122,7 +124,7 @@
                 //mouse
 
                 var mouseX, mouseY, mousePVec, isMouseDown, selectedBody, mouseJoint;
-                var canvasPosition = getElementPosition(document.getElementById("canvas"));
+                var canvasPosition = getElementPosition(document.getElementById('box2d'));
 
                 document.addEventListener("mousedown", function (e) {
                     isMouseDown = true;
@@ -194,8 +196,9 @@
                     }
 
                     world.Step(1 / 60, 10, 10);
-//                    world.DrawDebugData();
+                    debugBox2D ? world.DrawDebugData() : 0
                     world.ClearForces();
+
                     var node = world.GetBodyList();
                     while (node) {
                         var b = node;
