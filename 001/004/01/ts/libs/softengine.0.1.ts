@@ -886,10 +886,10 @@ module SoftEngine {
             }
         }
 
-        public LoadJSONFileAsync( fileName:string, callback:(result: Mesh[]) => any ):void {
+        public LoadJSONFileAsync( fileName:string, callback:(result:Mesh[]) => any ):void {
             var jsonObject:any = {};
             var xmlhttp:XMLHttpRequest = new XMLHttpRequest();
-            xmlhttp.open( "GET", fileName, true );
+            xmlhttp.open( 'GET', fileName, true );
             var that:any = this;
             xmlhttp.onreadystatechange = function () {
                 if ( xmlhttp.readyState == 4 && xmlhttp.status == 200 ) {
@@ -900,7 +900,7 @@ module SoftEngine {
             xmlhttp.send( null );
         }
 
-        private CreateMeshesFromJSON( jsonObject:any ):Mesh[] {
+        public CreateMeshesFromJSON( jsonObject:any ):Mesh[] {
             var meshes:Mesh[] = [];
             var materials:Material[] = [];
 
@@ -975,8 +975,8 @@ module SoftEngine {
 
                 if ( uvCount > 0 ) {
                     var meshTextureID:string = jsonObject.meshes[meshIndex].materialId;
-                    var meshTextureName:string = materials[meshTextureID].DiffuseTextureName;
-                    mesh.Texture = new Texture(meshTextureName, 512, 512);
+                    var meshTextureName:string = <string>materials[meshTextureID].DiffuseTextureName;
+                    mesh.Texture = new Texture( '../models/' + meshTextureName, 512, 512);
                 }
 
                 mesh.computeFacesNormals();

@@ -823,7 +823,7 @@ var SoftEngine;
         Device.prototype.LoadJSONFileAsync = function (fileName, callback) {
             var jsonObject = {};
             var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open("GET", fileName, true);
+            xmlhttp.open('GET', fileName, true);
             var that = this;
             xmlhttp.onreadystatechange = function () {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
@@ -910,7 +910,7 @@ var SoftEngine;
                 if (uvCount > 0) {
                     var meshTextureID = jsonObject.meshes[meshIndex].materialId;
                     var meshTextureName = materials[meshTextureID].DiffuseTextureName;
-                    mesh.Texture = new Texture(meshTextureName, 512, 512);
+                    mesh.Texture = new Texture('../models/' + meshTextureName, 512, 512);
                 }
 
                 mesh.computeFacesNormals();

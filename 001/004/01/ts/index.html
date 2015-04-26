@@ -2,6 +2,9 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
+    <meta property="og:image" content="../og/2.jpg"/>
+    <meta property="og:title" content="Monkey"/>
+    <meta property="og:description" content="CPU version"/>
     <title></title>
     <style>
         body {background-color:#000;margin:0;padding:0;overflow:hidden}
@@ -38,7 +41,7 @@
             camera.Position = new SoftEngine.Vector3( 0, 0, 10 );
             camera.Target = new SoftEngine.Vector3( 0, 0, 0 );
 
-            device.LoadJSONFileAsync( 'monkey.babylon', loadJSONCompleted );
+            device.LoadJSONFileAsync( '../models/monkey.babylon', loadJSONCompleted );
         }
 
         function loadJSONCompleted(meshesLoaded){
