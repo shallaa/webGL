@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>bsWebGL 소모임 1기 - Minimal 2D Engine!</title>
+    <script src="bsGL.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+    bsGL.init('canvas', function () {
+        for (var i = 0; i < 500; i++) {
+            var test = bsGL.Mesh()
+            bsGL.children.push(test)
+            test.position[0] = Math.random() * 1920
+            test.position[1] = Math.random() * 1920
+            var s = Math.random() * 100
+            test.scale = [s, s, s]
+            if (i % 5 == 0) {
+                test.material = bsGL.Material('bitmap', 'test.png')
+            }
+        }
+
+        bsGL.LOOPS['loopTest'] = function () {
+            for (var i = 0; i < 500; i++) {
+                bsGL.children[i].rotation[2] += 0.1
+            }
+        }
+    }, 'shader.js', 'ex.js')
+</script>
+</body>
+</html>
