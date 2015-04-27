@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+<div style="position: absolute; left:30px; top:30px; width: 600px; height: 480px; border: 3px solid #eeeeee;">
+	<canvas id="cv" width="600" height="480">
+	</canvas>
+</div>
+</body>
+
+<script type="text/javascript">
+
+var rectCount = 50000;
+function Mesh(){
+	var tmpRandom = Math.random(); 
+	this.scale = [50/600*tmpRandom, 50/480*tmpRandom, 0];
+	this.rotation = [Math.random(),Math.random(),Math.random()];
+	this.position = [Math.random()*2-1, Math.random()*2-1, 0];
+	this.color = [Math.random(), Math.random(), Math.random()];
+}
+// 1. gl 가져오기
+
+var cv = document.getElementById("cv");
+var gl = cv.getContext("webgl");
+
+// 2. shader 소스 생성
+var vertexShaderSource = 	"" +
+							"attribute vec3 aVertexPosition;" +
+							"attribute vec3 aPosition;" +
+							"attribute vec3 aRotation;" +
+							"attribute vec3 aScale;" +
+							"attribute vec3 aColor;" +
+							"varying vec3 vColor;" +
+							"mat4 scaleMTX(vec3 sc){" +
+							"	return mat4(sc[0],0,0,0,  0,sc[1],0,0,  0,0,sc[2],0, 0,0,0,1);" +
+							"}" +
+							"mat4 rotationMTX(vec3 r){" +
+							"	float s, c;" +
+							"	s = sin(r[0]), c = cos(r[0]);" +
+							"	mat4 mx = mat4(1,0,0,0,  0,c,-s,0,  0,s,c,0,  0,0,0,1);" +
+							"	s = sin(r[1]), c = cos(r[1]);" +
+							"	mat4 my = mat4(c,0,-s,0,  0,1,0,0,  s,0,c,0,  0,0,0,1);" +
+							"	s = sin(r[2]), c = cos(r[2]);" +
+							"	mat4 mz = mat4(c,-s,0,0,  s,c,0,0,  0,0,1,0,  0,0,0,1);" +
+							"	return mx*my*mz;" +
+							"}" +
+							"mat4 positionMTX(vec3 p){" +
+							"	return mat4(1,0,0,0,  0,1,0,0,  0,0,0,1,  p[0],p[1],p[2],1);" +
+							"}" +
+							"" +
+							"void main(void){" +
+							"	vColor = aColor;" +
+							"	gl_Position = vec4(aVertexPosition, 1.0);" +
+//  							"	gl_Position = positionMTX(aPosition)*vec4(aVertexPosition, 1.0);" +
+							"	gl_Position = positionMTX(aPosition)*rotationMTX(aRotation)*scaleMTX(aScale)*vec4(aVertexPosition, 1.0);" +
+							"}" +
+							"" +
+							"";
+var fragmentShaderSource =	"" +					
+							"precision mediump float;" +
+							"varying vec3 vColor;" +
+							"void main(void){" +
+// 							"	gl_FragColor = vec4(0.95, 0.95, 0.95, 1.0);" +
+							"	gl_FragColor = vec4(vColor, 1.0);" +
+							"" +
+							"}" +
+							"";
+
+// 3. shader 생성 및 소스 적용 및 컴파일
+var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+gl.shaderSource(vertexShader, vertexShaderSource);
+gl.compileShader(vertexShader);
+
+var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+gl.shaderSource(fragmentShader, fragmentShaderSource);
+gl.compileShader(fragmentShader);
+
+// 4. program 생성 , 연결 , 활성화 및 쉐이더 추가, program 사용
+var drawProgram = gl.createProgram();
+gl.attachShader(drawProgram, vertexShader);
+gl.attachShader(drawProgram, fragmentShader);
+gl.linkProgram(drawProgram);
+gl.useProgram(drawProgram);
+
+drawProgram.aVertexPosition = gl.getAttribLocation(drawProgram, "aVertexPosition");
+drawProgram.aPosition = gl.getAttribLocation(drawProgram, "aPosition");
+drawProgram.aScale = gl.getAttribLocation(drawProgram, "aScale");
+drawProgram.aRotation = gl.getAttribLocation(drawProgram, "aRotation");
+drawProgram.aColor = gl.getAttribLocation(drawProgram, "aColor");
+
+gl.enableVertexAttribArray(drawProgram.aVertexPosition);
+gl.enableVertexAttribArray(drawProgram.aPosition);
+gl.enableVertexAttribArray(drawProgram.aRotation);
+gl.enableVertexAttribArray(drawProgram.aScale);
+gl.enableVertexAttribArray(drawProgram.aColor);
+
+// 5. 뷰영역지정 및 배경초기화 
+gl.viewport(0,0,600,480);
+
+gl.clearColor(1,1,1,1);
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+// 6. vertext정보 생성 , buffer 생성 및 buffer 정의 
+
+// var vertexPositionData = [-0.5, 0.5, 0,
+//                           0.5, 0.5, 0,
+//                           -0.5, -0.5, 0,
+//                           0.5, -0.5, 0];
+                          
+var vertexPositionData = [];
+                         
+var vertexIndexData = [];                       
+var rotationData = [];
+var scaleData = [];
+var positionData = [];
+var colorData = [];
+var meshes = [];
+var m, tmp0, tmp1, tmp2;
+
+for(i = 0 ; i < rectCount; i++){
+	vertexPositionData.push(-0.5, 0.5, 0,  0.5, 0.5, 0, -0.5, -0.5, 0,  0.5, -0.5, 0);
+	
+	vertexIndexData.push(4*i + 0);
+	vertexIndexData.push(4*i + 1);
+	vertexIndexData.push(4*i + 2);
+	vertexIndexData.push(4*i + 1);
+	vertexIndexData.push(4*i + 2);
+	vertexIndexData.push(4*i + 3);
+	
+	m = new Mesh();
+	
+	tmp0 = m.position[0];
+	tmp1 = m.position[1];
+	tmp2 = m.position[2];	
+	positionData.push(tmp0, tmp1, tmp2);
+	positionData.push(tmp0, tmp1, tmp2);
+	positionData.push(tmp0, tmp1, tmp2);
+	positionData.push(tmp0, tmp1, tmp2);
+	
+	tmp0 = m.rotation[0];
+	tmp1 = m.rotation[1];
+	tmp2 = m.rotation[2];	
+	rotationData.push(tmp0, tmp1, tmp2);
+	rotationData.push(tmp0, tmp1, tmp2);
+	rotationData.push(tmp0, tmp1, tmp2);
+	rotationData.push(tmp0, tmp1, tmp2);
+
+	tmp0 = m.scale[0];
+	tmp1 = m.scale[1];
+	tmp2 = m.scale[2];	
+	scaleData.push(tmp0, tmp1, tmp2);
+	scaleData.push(tmp0, tmp1, tmp2);
+	scaleData.push(tmp0, tmp1, tmp2);
+	scaleData.push(tmp0, tmp1, tmp2);
+
+	tmp0 = m.color[0];
+	tmp1 = m.color[1];
+	tmp2 = m.color[2];	
+	colorData.push(tmp0, tmp1, tmp2);
+	colorData.push(tmp0, tmp1, tmp2);
+	colorData.push(tmp0, tmp1, tmp2);
+	colorData.push(tmp0, tmp1, tmp2);
+	
+	meshes.push(m);
+}
+
+
+var vertexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+gl.vertexAttribPointer(drawProgram.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+
+var positionBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+gl.vertexAttribPointer(drawProgram.aPosition, 3, gl.FLOAT, false, 0, 0);
+
+var rotationBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer);
+gl.vertexAttribPointer(drawProgram.aRotation, 3, gl.FLOAT, false, 0, 0);
+
+var scaleBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, scaleBuffer);
+gl.vertexAttribPointer(drawProgram.aScale, 3, gl.FLOAT, false, 0, 0);
+
+var colorBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+gl.vertexAttribPointer(drawProgram.aColor, 3, gl.FLOAT, false, 0, 0);
+
+var indexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+
+
+
+// 7. vertexAttribPointer 정의 및 draw
+
+setInterval(function(){
+		
+		var len = 12*rectCount;
+		for(var j = 0; j < len; j++){
+			rotationData[j] += 0.1; 
+		}
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW);
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionData), gl.STATIC_DRAW);
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, rotationBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rotationData), gl.STATIC_DRAW);
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, scaleBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(scaleData), gl.STATIC_DRAW);
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
+				
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexIndexData), gl.STATIC_DRAW);
+		gl.drawElements(gl.TRIANGLES, 6*rectCount, gl.UNSIGNED_SHORT ,0);
+} , 64);
+</script>
+
+</html>
